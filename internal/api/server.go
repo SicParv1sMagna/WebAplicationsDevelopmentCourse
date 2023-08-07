@@ -25,6 +25,18 @@ func StartServer() {
 		})
 	})
 
+	r.GET("/wishes", func(c *gin.Context) {
+		wishes := []string{
+			"Хочу AKKO V3 Cream Blue switches",
+			"Хочу Монитор 54 дюйма",
+			"Хочу Porsche 991 GTR",
+		}
+
+		c.HTML(http.StatusOK, "wishes.tmpl", gin.H{
+			"Wishes": wishes,
+		})
+	})
+
 	r.Static("/image", "./resources")
 
 	r.Run()
