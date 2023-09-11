@@ -1,0 +1,23 @@
+{{ define "settings" }}
+<div class="overlay">
+    <div id="access-settings-modal" class="modal" style="display: none;">
+        <div class="modal-header">
+            <h4>Настройки доступа</h4>
+            <button class="close-button" id="close-modal-button">Закрыть</button>
+        </div>
+        <div class="modal-body">
+            {{ range .Users }}
+            <div class="users">
+                <p>{{.Surname}} {{.Name}}</p>
+                <select>
+                    <option>Владелец</option>
+                    <option>Модератор</option>
+                    <option>Редактор</option>
+                    <option>Читатель</option>
+                </select>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</div>
+{{end}}
