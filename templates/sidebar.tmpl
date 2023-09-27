@@ -31,11 +31,14 @@
         </div>
         <div class="notes-container">
             {{ range .Notes }}
-            <div class="note">
-                <a href="../../notes/md/{{.Id}}">{{.Name}}</a>
-                
-                <button><img src="/images/trash.png"></img></button>
-            </div>
+                {{ if eq .Status "Активен" }}
+                    <div class="note">
+                        <a href="../../notes/md/{{.Markdown_ID}}">{{.Name}}</a>
+                        <form method="POST" action="/delete?q={{.Markdown_ID}}">
+                            <button type="submit"><img src="/images/trash.png"></img></button>
+                        </form>
+                    </div>
+                {{ end }}
             {{ end }}
         </div>
         <div class="create-note">
@@ -46,7 +49,9 @@
             {{ range .Tasks }}
             <div class="note">
                 <a href="../../notes/todo/{{.Id}}">{{.Name}}</a>
-                <button><img src="/images/trash.png"></img></button>
+                <form>
+                    <button><img src="/images/trash.png"></img></button>
+                </form>
             </div>
             {{end}}
         </div>

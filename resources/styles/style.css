@@ -390,12 +390,21 @@ body {
   margin-left: 20px;
 }
 
+.note form {
+  display:flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  width: auto;
+  margin: 0;
+}
+
 .note:hover {
   transition: 0.3s;
   background-color: var(--color-purple-600);
 }
 
-.note button {
+.note form button {
   height: 100%;
   margin-right: 20px;
   background-color: transparent;
@@ -448,12 +457,23 @@ body {
   align-items: center;
 }
 
-.note-head h4 {
+.note-head div {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.note-head div h4 {
   margin: 0 0 0 0;
   padding: 0 0 0 0;
 }
 
-.note-head button {
+.note-head div p {
+  margin-right: 15px;
+}
+
+.note-head div button {
   height: 30px;
   width: 120px;
   border: none;

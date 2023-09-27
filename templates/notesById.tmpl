@@ -14,9 +14,14 @@
             {{ template "settings" .}}
             <div class="editor">
                 <div class="note-head">
-                    <a href="../"><button>Назад</button></a>
-                    <h4>{{ .Note.Name }}</h4>
-                    <button id="access-settings-button">Общий доступ</button>
+                    <div>
+                        <a href="../"><button>Назад</button></a>
+                        <h4>{{ .Note.Name }}</h4>
+                    </div>
+                    <div>
+                        <p>{{ .Note.Created_Time.Format "2006-01-02 15:04" }}</p>
+                        <button id="access-settings-button">Общий доступ</button>
+                    </div>
                 </div>
                 <div class="markdowns">
                     <div class="redactor">

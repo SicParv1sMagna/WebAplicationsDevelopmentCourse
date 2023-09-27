@@ -2,11 +2,19 @@ package main
 
 import (
 	"log"
-	"project/internal/api"
+	"project/internal/app"
 )
 
 func main() {
 	log.Println("API start!")
-	api.StartServer()
+
+	application, err := app.New()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	application.StartServer()
+
 	log.Println("API is shitting down!")
 }
