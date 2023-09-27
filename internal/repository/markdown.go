@@ -2,14 +2,23 @@ package repository
 
 import "project/internal/model"
 
-func (r *Repository) GetAllNotes(userID uint) ([]model.Markdown, error) {
-	var md []model.Markdown
-	err := r.db.Table("Markdown").Where("Moderator_ID = ?", userID).Find(&md).Error
-	if err != nil {
+func (r *Repository) GetMarkdownsByUserID(userID int) ([]model.Markdown, error) {
+	var markdowns []model.Markdown
+
+	// SQL-запрос с явным SQL-кодом для выполнения JOIN через таблицы Document_Request и Contributor
+	sqlQuery := `
+        SELECT DISTINCT "Markdown".*
+        FROM "Markdown"
+        INNER JOIN Document_Request ON "Markdown".Markdown_ID = Document_Request.Markdown_ID
+        INNER JOIN Contributor ON Document_Request.Contributor_ID = Contributor.Contributor_ID
+        WHERE Contributor.User_ID = ?`
+
+	// Выполняем запрос и сканируем результаты в структуру Markdown
+	if err := r.db.Raw(sqlQuery, userID).Scan(&markdowns).Error; err != nil {
 		return nil, err
 	}
 
-	return md, nil
+	return markdowns, nil
 }
 
 func (r *Repository) GetMarkdownById(mdID uint) (model.Markdown, error) {

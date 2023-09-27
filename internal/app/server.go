@@ -246,7 +246,7 @@ func (a *Application) StartServer() {
 	})
 
 	router.GET("/notes", func(c *gin.Context) {
-		markdowns, err := a.repository.GetAllNotes(1)
+		markdowns, err := a.repository.GetMarkdownsByUserID(1)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -291,7 +291,7 @@ func (a *Application) StartServer() {
 			return
 		}
 
-		markdowns, err := a.repository.GetAllNotes(1)
+		markdowns, err := a.repository.GetMarkdownById(1)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

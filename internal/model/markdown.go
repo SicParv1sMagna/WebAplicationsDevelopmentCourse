@@ -8,5 +8,4 @@ type Markdown struct {
 	Content      string
 	Status       string
 	Created_Time time.Time `json:"start_date"`
-	Moderator_ID uint
 }
