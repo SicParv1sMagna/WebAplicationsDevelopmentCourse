@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// Генерируем строку подключения к базе данных
 func FromEnv() string {
 	// host := os.Getenv("DB_HOST")
 	// if host == "" {

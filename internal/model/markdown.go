@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+// ORM-модель таблицы Markdown из базы данных
 type Markdown struct {
 	Markdown_ID  int `gorm:"primarykey;autoIncrement"`
 	Name         string

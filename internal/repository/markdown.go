@@ -2,8 +2,11 @@ package repository
 
 import "project/internal/model"
 
+// Вытягиваем все Markdown - документы пользователя
 func (r *Repository) GetAllNotes(userID uint) ([]model.Markdown, error) {
+	// Инициализируем массив md
 	var md []model.Markdown
+	// Делаем запрос к базе данных на получение списка md
 	err := r.db.Table("Markdown").Where("Moderator_ID = ?", userID).Find(&md).Error
 	if err != nil {
 		return nil, err
@@ -12,6 +15,7 @@ func (r *Repository) GetAllNotes(userID uint) ([]model.Markdown, error) {
 	return md, nil
 }
 
+// Получаем документ по его ID
 func (r *Repository) GetMarkdownById(mdID uint) (model.Markdown, error) {
 	var md model.Markdown
 

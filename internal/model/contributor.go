@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+// ORM-модель таблицы Contributor из базы данных
 type Contributor struct {
 	Contributor_ID  int `gorm:"primarykey;autoIncrement"`
 	User_ID         int

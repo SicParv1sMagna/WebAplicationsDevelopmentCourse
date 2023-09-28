@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Конфигурация созданного сервера
 type Config struct {
 	ServiceHost string
 	ServicePort int

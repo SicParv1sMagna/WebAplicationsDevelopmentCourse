@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Структура подключения к БД
 type Repository struct {
 	db *gorm.DB
 }
