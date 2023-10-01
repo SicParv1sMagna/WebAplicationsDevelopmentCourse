@@ -78,3 +78,24 @@ func ValidateRegistrationData(user model.User) *utils.Response {
 		Message: "",
 	}
 }
+
+func ValidateAuthorizationData(user model.User) utils.Response {
+	if user.Password == "" {
+		return utils.Response{
+			Status:  "Failed",
+			Message: "Введите пароль",
+		}
+	}
+
+	if user.Email == "" {
+		return utils.Response{
+			Status:  "Failed",
+			Message: "Введите Email",
+		}
+	}
+
+	return utils.Response{
+		Status:  "Success",
+		Message: "",
+	}
+}

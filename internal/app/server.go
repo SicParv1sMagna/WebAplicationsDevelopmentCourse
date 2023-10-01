@@ -5,6 +5,7 @@ import (
 	"project/internal/delivery"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/sessions"
 )
 
 func (a *Application) StartServer() {
@@ -12,6 +13,8 @@ func (a *Application) StartServer() {
 
 	// Создаем роутинг
 	router := gin.Default()
+
+	store := sessions.NewCookieStore([]byte("SuperSecretKey"))
 
 	//	http://localhost:8080/user
 	user := router.Group("/user")
@@ -23,7 +26,7 @@ func (a *Application) StartServer() {
 
 		//	http://localhost:8080/user/login
 		user.POST("/login", func(c *gin.Context) {
-			delivery.AuthUser(a.repository, c)
+			delivery.AuthUser(a.repository, store, c)
 		})
 
 		//	http://localhost:8080/user/delete
