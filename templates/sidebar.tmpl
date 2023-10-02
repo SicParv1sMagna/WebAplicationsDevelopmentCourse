@@ -41,20 +41,6 @@
                 {{ end }}
             {{ end }}
         </div>
-        <div class="create-note">
-            <h3>Tasks</h3>
-            <button>+</button>
-        </div>
-        <div class="notes-container">
-            {{ range .Tasks }}
-            <div class="note">
-                <a href="../../notes/todo/{{.Id}}">{{.Name}}</a>
-                <form>
-                    <button><img src="/images/trash.png"></img></button>
-                </form>
-            </div>
-            {{end}}
-        </div>
 
         <!-- Display search results here if available -->
         {{ if .SearchResults }}

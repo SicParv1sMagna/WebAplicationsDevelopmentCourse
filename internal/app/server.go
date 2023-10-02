@@ -126,101 +126,6 @@ func performSearch(query string) []SearchResult {
 	return results
 }
 
-// func StartServer() {
-// 	log.Println("Server is starting")
-
-// 	r := gin.Default()
-// 	r.LoadHTMLGlob("templates/*")
-
-// 	r.GET("/ping", func(c *gin.Context) {
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"message": "pong",
-// 		})
-// 	})
-
-// 	r.Static("/image", "./resources")
-// 	r.Static("/styles", "./resources/styles")
-// 	r.Static("/images", "./resources/images")
-// 	r.Static("/js", "./resources/js")
-
-// 	r.GET("/", func(c *gin.Context) {
-// 		c.HTML(http.StatusOK, "home.tmpl", gin.H{
-// 			"css": "/styles/style.css",
-// 		})
-// 	})
-
-// 	r.GET("/about", func(c *gin.Context) {
-// 		c.HTML(http.StatusOK, "about.tmpl", gin.H{})
-// 	})
-
-// 	r.GET("/register", func(c *gin.Context) {
-// 		c.HTML(http.StatusOK, "register.tmpl", gin.H{
-// 			"css": "/styles/style.css",
-// 		})
-// 	})
-
-// 	r.GET("/notes", func(c *gin.Context) {
-// 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
-// 			"css":   "styles/style.css",
-// 			"Notes": notes,
-// 			"Tasks": tasks,
-// 		})
-// 	})
-
-// 	r.GET("/notes/md/:id", func(c *gin.Context) {
-// 		id, err := strconv.Atoi(c.Param("id"))
-// 		if err != nil {
-// 			log.Println(err)
-// 		}
-
-// 		note := notes[id-1]
-
-// 		c.HTML(http.StatusOK, "notesById.tmpl", gin.H{
-// 			"css":   "/styles/style.css",
-// 			"Notes": notes,
-// 			"Tasks": tasks,
-// 			"Note":  note,
-// 			"Users": users,
-// 		})
-// 	})
-
-// 	r.GET("/notes/todo/:id", func(c *gin.Context) {
-// 		id, err := strconv.Atoi(c.Param("id"))
-// 		if err != nil {
-// 			log.Println(err)
-// 		}
-
-// 		task := tasks[id-1]
-
-// 		c.HTML(http.StatusOK, "todosById.tmpl", gin.H{
-// 			"css":   "/styles/style.css",
-// 			"Notes": notes,
-// 			"Tasks": tasks,
-// 			"Task":  task,
-// 		})
-// 	})
-
-// 	r.GET("/search", func(c *gin.Context) {
-// 		query := c.DefaultQuery("query", "")
-// 		log.Println(query)
-// 		searchResults := performSearch(query)
-
-// 		// Render the sidebar template with the search results
-// 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
-// 			"css":           "/styles/style.css",
-// 			"SearchQuery":   query,
-// 			"SearchResults": searchResults,
-// 			"Notes":         notes,
-// 			"Tasks":         tasks,
-// 			// Add any other necessary data for the sidebar template
-// 		})
-// 	})
-
-// 	r.Run()
-
-// 	log.Println("Server is shutting down")
-// }
-
 func (a *Application) StartServer() {
 	log.Println("Server starting")
 
@@ -254,7 +159,6 @@ func (a *Application) StartServer() {
 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
 			"css":   "/styles/style.css",
 			"Notes": markdowns,
-			"Tasks": tasks,
 		})
 	})
 
@@ -272,7 +176,6 @@ func (a *Application) StartServer() {
 		c.HTML(http.StatusOK, "notesById.tmpl", gin.H{
 			"css":   "/styles/style.css",
 			"Notes": notes,
-			"Tasks": tasks,
 			"Note":  markdown,
 			"Users": users,
 		})
@@ -300,7 +203,6 @@ func (a *Application) StartServer() {
 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
 			"css":   "/styles/style.css",
 			"Notes": markdowns,
-			"Tasks": tasks,
 		})
 	})
 
@@ -319,15 +221,11 @@ func (a *Application) StartServer() {
 		}
 
 		fmt.Println(searchResults)
-
-		// Render the sidebar template with the search results
 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
 			"css":           "/styles/style.css",
 			"SearchQuery":   query,
 			"SearchResults": searchResults,
 			"Notes":         notes,
-			"Tasks":         tasks,
-			// Add any other necessary data for the sidebar template
 		})
 	})
 
