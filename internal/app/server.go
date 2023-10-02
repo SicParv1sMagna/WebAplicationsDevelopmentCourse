@@ -3,9 +3,9 @@ package app
 import (
 	"log"
 	"project/internal/delivery"
+	jwttoken "project/internal/middleware/jwt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/sessions"
 )
 
 func (a *Application) StartServer() {
@@ -13,8 +13,6 @@ func (a *Application) StartServer() {
 
 	// Создаем роутинг
 	router := gin.Default()
-
-	store := sessions.NewCookieStore([]byte("SuperSecretKey"))
 
 	//	http://localhost:8080/user
 	user := router.Group("/user")
@@ -26,14 +24,57 @@ func (a *Application) StartServer() {
 
 		//	http://localhost:8080/user/login
 		user.POST("/login", func(c *gin.Context) {
-			delivery.AuthUser(a.repository, store, c)
+			delivery.AuthUser(a.repository, c)
 		})
 
-		//	http://localhost:8080/user/delete
-		user.DELETE("/delete", delivery.DeleteUser)
+	}
 
-		//	http://localhost:8080/user/edit-info
-		user.PUT("/edit-info", delivery.UpdateUserInfo)
+	//	http://localhost:8080/api
+	api := router.Group("/api")
+	{
+		api.Use(jwttoken.CheckJWTToken())
+		//	http://localhost:8080/api/user
+		user := api.Group("/user")
+		{
+			//	http://localhost:8080/api/user/delete
+			user.DELETE("/delete", delivery.DeleteUser)
+
+			//	http://localhost:8080/api/user/edit-info
+			user.PUT("/edit-info", delivery.UpdateUserInfo)
+		}
+
+		//	http://localhost:8080/api/notes
+		notes := api.Group("/notes")
+		{
+			//	http://localhost:8080/api/notes/markdown
+			markdowns := notes.Group("/markdown")
+			{
+				//	http://localhost:8080/api/notes/markdown/create-markdown
+				markdowns.POST("/create-markdown", func(c *gin.Context) {
+					delivery.CreateMarkdown(a.repository, c)
+				})
+
+				//	http://localhost:8080/api/notes/markdown/get-markdown
+				markdowns.GET("/get-markdown/:id", func(c *gin.Context) {
+					delivery.GetMarkdown(a.repository, c)
+				})
+
+				//	http://localhost:8080/api/notes/markdown/get-all-markdowns
+				markdowns.GET("/get-all-markdowns", func(c *gin.Context) {
+					delivery.GetAllMarkdowns(a.repository, c)
+				})
+
+				//	http://localhost:8080/api/notes/markdown/delete-markdown
+				markdowns.PUT("/delete-markdown/:id", func(c *gin.Context) {
+					delivery.DeleteMarkdown(a.repository, c)
+				})
+
+				//	http://localhost:8080/api/notes/markdown/update-markdown
+				markdowns.PUT("/update-markdown", func(c *gin.Context) {
+					delivery.UpdateMarkdown(a.repository, c)
+				})
+			}
+		}
 	}
 
 	// TODO: Add contributor routes
@@ -42,22 +83,6 @@ func (a *Application) StartServer() {
 	// {
 
 	// }
-
-	notes := router.Group("/notes")
-	{
-		markdowns := notes.Group("/markdown")
-		{
-			markdowns.POST("/create-markdown", delivery.CreateMarkdown)
-
-			markdowns.GET("/get-markdown", delivery.GetMarkdown)
-
-			markdowns.GET("/get-all-markdowns", delivery.GetAllMarkdowns)
-
-			markdowns.DELETE("/delete-markdown", delivery.DeleteMarkdown)
-
-			markdowns.PUT("/update-markdown", delivery.UpdateMarkdown)
-		}
-	}
 
 	err := router.Run()
 	if err != nil {

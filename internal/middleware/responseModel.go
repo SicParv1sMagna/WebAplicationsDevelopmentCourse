@@ -1,4 +1,4 @@
-package utils
+package middleware
 
 type Response struct {
 	Status  string

@@ -1,56 +1,56 @@
 package validators
 
 import (
+	"project/internal/middleware"
 	"project/internal/model"
-	"project/internal/utils"
 	"unicode"
 )
 
-func ValidateRegistrationData(user model.User) *utils.Response {
+func ValidateRegistrationData(user model.User) *middleware.Response {
 	if user.FirstName == "" {
-		return &utils.Response{
+		return &middleware.Response{
 			Status:  "Failed",
 			Message: "Поле имя должно быть заполнено",
 		}
 	}
 
 	if user.SecondName == "" {
-		return &utils.Response{
+		return &middleware.Response{
 			Status:  "Failed",
 			Message: "Поле фамилия должно быть заполнено",
 		}
 	}
 
 	if user.Email == "" {
-		return &utils.Response{
+		return &middleware.Response{
 			Status:  "Failed",
 			Message: "Поле Email должно быть заполнено",
 		}
 	}
 
 	if user.Password == "" {
-		return &utils.Response{
+		return &middleware.Response{
 			Status:  "Failed",
 			Message: "Поле пароль должно быть заполнено",
 		}
 	}
 
 	if user.Password != user.RepeatPassword {
-		return &utils.Response{
+		return &middleware.Response{
 			Status:  "Failed",
 			Message: "Пароли не совпадают",
 		}
 	}
 
 	if len(user.Password) > 20 {
-		return &utils.Response{
+		return &middleware.Response{
 			Status:  "Failed",
 			Message: "Пароль должен быть меньше 20 символов",
 		}
 	}
 
 	if len(user.Password) < 8 {
-		return &utils.Response{
+		return &middleware.Response{
 			Status:  "Failed",
 			Message: "Пароль должен быть больше 8 символов",
 		}
@@ -66,35 +66,35 @@ func ValidateRegistrationData(user model.User) *utils.Response {
 			hasLetter = true
 		}
 		if hasDigit && hasLetter {
-			return &utils.Response{
+			return &middleware.Response{
 				Status:  "Failed",
 				Message: "Пароль должен содержать цифры и буквы",
 			}
 		}
 	}
 
-	return &utils.Response{
+	return &middleware.Response{
 		Status:  "Success",
 		Message: "",
 	}
 }
 
-func ValidateAuthorizationData(user model.User) utils.Response {
+func ValidateAuthorizationData(user model.User) middleware.Response {
 	if user.Password == "" {
-		return utils.Response{
+		return middleware.Response{
 			Status:  "Failed",
 			Message: "Введите пароль",
 		}
 	}
 
 	if user.Email == "" {
-		return utils.Response{
+		return middleware.Response{
 			Status:  "Failed",
 			Message: "Введите Email",
 		}
 	}
 
-	return utils.Response{
+	return middleware.Response{
 		Status:  "Success",
 		Message: "",
 	}
