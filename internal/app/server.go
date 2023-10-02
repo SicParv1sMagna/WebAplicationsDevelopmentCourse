@@ -291,7 +291,7 @@ func (a *Application) StartServer() {
 			return
 		}
 
-		markdowns, err := a.repository.GetMarkdownById(1)
+		markdowns, err := a.repository.GetMarkdownsByUserID(1)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -301,6 +301,33 @@ func (a *Application) StartServer() {
 			"css":   "/styles/style.css",
 			"Notes": markdowns,
 			"Tasks": tasks,
+		})
+	})
+
+	router.GET("/search", func(c *gin.Context) {
+		query := c.DefaultQuery("query", "")
+		fmt.Println(query)
+
+		searchResults, err := a.repository.SearchMarkdowns(1, query)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		notes, err := a.repository.GetMarkdownsByUserID(1)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(searchResults)
+
+		// Render the sidebar template with the search results
+		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
+			"css":           "/styles/style.css",
+			"SearchQuery":   query,
+			"SearchResults": searchResults,
+			"Notes":         notes,
+			"Tasks":         tasks,
+			// Add any other necessary data for the sidebar template
 		})
 	})
 

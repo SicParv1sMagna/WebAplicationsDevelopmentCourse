@@ -63,8 +63,10 @@
             <div class="notes-container">
                 {{ range .SearchResults }}
                 <div class="note">
-                    <a href="{{ .Link }}">{{ .Title }}</a>
-                    <button><img src="/images/trash.png"></img>
+                    <a href="/notes/md/{{.Markdown_ID}}">{{ .Name }}</a>
+                    <form>
+                        <button><img src="/images/trash.png"></img>
+                    </form>
                 </div>
                 {{ end }}
             </div>
