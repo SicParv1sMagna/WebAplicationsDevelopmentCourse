@@ -220,12 +220,18 @@ func (a *Application) StartServer() {
 			log.Fatal(err)
 		}
 
+		placeholder := "Поиск"
+		if query != "" {
+			placeholder = query
+		}
+
 		fmt.Println(searchResults)
 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
 			"css":           "/styles/style.css",
 			"SearchQuery":   query,
 			"SearchResults": searchResults,
 			"Notes":         notes,
+			"Placeholder":   placeholder,
 		})
 	})
 
