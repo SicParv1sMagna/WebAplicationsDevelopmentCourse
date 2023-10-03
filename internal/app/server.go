@@ -151,15 +151,38 @@ func (a *Application) StartServer() {
 	})
 
 	router.GET("/notes", func(c *gin.Context) {
-		markdowns, err := a.repository.GetMarkdownsByUserID(1)
-		if err != nil {
-			log.Fatal(err)
-		}
+		query := c.DefaultQuery("query", "")
 
-		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
-			"css":   "/styles/style.css",
-			"Notes": markdowns,
-		})
+		if query != "" {
+			// Запрос на поиск
+			markdowns, err := a.repository.SearchMarkdowns(1, query)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			placeholder := "Поиск"
+			if query != "" {
+				placeholder = query
+			}
+
+			c.HTML(http.StatusOK, "notes.tmpl", gin.H{
+				"css":         "/styles/style.css",
+				"SearchQuery": query,
+				"Placeholder": placeholder,
+				"Notes":       markdowns,
+			})
+		} else {
+			// Запрос на получение всех заметок
+			markdowns, err := a.repository.GetMarkdownsByUserID(1)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			c.HTML(http.StatusOK, "notes.tmpl", gin.H{
+				"css":   "/styles/style.css",
+				"Notes": markdowns,
+			})
+		}
 	})
 
 	router.GET("/notes/md/:id", func(c *gin.Context) {
@@ -203,35 +226,6 @@ func (a *Application) StartServer() {
 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
 			"css":   "/styles/style.css",
 			"Notes": markdowns,
-		})
-	})
-
-	router.GET("/search", func(c *gin.Context) {
-		query := c.DefaultQuery("query", "")
-		fmt.Println(query)
-
-		searchResults, err := a.repository.SearchMarkdowns(1, query)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		notes, err := a.repository.GetMarkdownsByUserID(1)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		placeholder := "Поиск"
-		if query != "" {
-			placeholder = query
-		}
-
-		fmt.Println(searchResults)
-		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
-			"css":           "/styles/style.css",
-			"SearchQuery":   query,
-			"SearchResults": searchResults,
-			"Notes":         notes,
-			"Placeholder":   placeholder,
 		})
 	})
 
