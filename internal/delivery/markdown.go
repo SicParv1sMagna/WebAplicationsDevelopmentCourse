@@ -35,6 +35,7 @@ func CreateMarkdown(repository *repository.Repository, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
+	fmt.Println(markdown)
 
 	//	Валиидруем название markdown'а
 	if err := validators.ValidateMarkdown(markdown); err.Status == "Failed" {
@@ -42,9 +43,9 @@ func CreateMarkdown(repository *repository.Repository, c *gin.Context) {
 		return
 	}
 
-	markdown.Moderator_ID = uint(userID)
+	markdown.User_ID = uint(userID)
 
-	if err := repository.CreateMarkdown(markdown, userID); err != nil {
+	if err := repository.CreateMarkdown(markdown); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
@@ -58,27 +59,12 @@ func CreateMarkdown(repository *repository.Repository, c *gin.Context) {
 func GetMarkdown(repository *repository.Repository, c *gin.Context) {
 	var md model.Markdown
 
-	token, err := c.Cookie("jwtToken")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, err)
-		return
-	}
-
-	userID, err := jwttoken.GetUserIDbyToken(token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, middleware.Response{
-			Status:  "Failed",
-			Message: "Unauthorized",
-		})
-		return
-	}
-
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-
+	fmt.Println(id)
 	if id < 0 {
 		c.JSON(http.StatusBadRequest, middleware.Response{
 			Status:  "Failed",
@@ -87,7 +73,7 @@ func GetMarkdown(repository *repository.Repository, c *gin.Context) {
 		return
 	}
 
-	md, err = repository.GetMarkdownById(uint(id), userID)
+	md, err = repository.GetMarkdownById(uint(id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -99,22 +85,7 @@ func GetMarkdown(repository *repository.Repository, c *gin.Context) {
 func GetAllMarkdowns(repository *repository.Repository, c *gin.Context) {
 	var md []model.Markdown
 
-	token, err := c.Cookie("jwtToken")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, err)
-		return
-	}
-
-	userID, err := jwttoken.GetUserIDbyToken(token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, middleware.Response{
-			Status:  "Failed",
-			Message: "Unauthorized",
-		})
-		return
-	}
-
-	md, err = repository.GetAllMarkdowns(userID)
+	md, err := repository.GetAllMarkdowns()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -124,21 +95,6 @@ func GetAllMarkdowns(repository *repository.Repository, c *gin.Context) {
 }
 
 func DeleteMarkdown(repository *repository.Repository, c *gin.Context) {
-	token, err := c.Cookie("jwtToken")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, err)
-		return
-	}
-
-	userID, err := jwttoken.GetUserIDbyToken(token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, middleware.Response{
-			Status:  "Failed",
-			Message: "Unauthorized",
-		})
-		return
-	}
-
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -158,7 +114,7 @@ func DeleteMarkdown(repository *repository.Repository, c *gin.Context) {
 		return
 	}
 
-	err = repository.DeleteMarkdownById(uint(id), userID)
+	err = repository.DeleteMarkdownById(uint(id))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
 		return
@@ -166,48 +122,42 @@ func DeleteMarkdown(repository *repository.Repository, c *gin.Context) {
 }
 
 func UpdateMarkdown(repository *repository.Repository, c *gin.Context) {
-
-	token, err := c.Cookie("jwtToken")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, err)
+	var jsonData map[string]interface{}
+	if err := c.BindJSON(&jsonData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	userID, err := jwttoken.GetUserIDbyToken(token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, middleware.Response{
-			Status:  "Failed",
-			Message: "Unauthorized",
-		})
+	mdID, idOk := jsonData["Markdown_ID"].(float64)
+	Name, nameOk := jsonData["Name"].(string)
+	Content, contentOk := jsonData["Content"].(string)
+
+	if !idOk || mdID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or missing Markdown_ID"})
 		return
 	}
 
-	mdID, err := strconv.Atoi(c.Query("Markdown_ID"))
-	if err != nil {
-		fmt.Println(err)
-		c.JSON(http.StatusInternalServerError, err)
-		return
-	}
-	Name := c.Query("Name")
-	Content := c.Query("Name")
-
-	candidate, err := repository.GetMarkdownById(uint(mdID), userID)
+	candidate, err := repository.GetMarkdownById(uint(mdID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	if Name != "" {
+	if nameOk {
 		candidate.Name = Name
 	}
 
-	if Content != "" {
+	if contentOk {
 		candidate.Content = Content
 	}
 
-	err = repository.UpdateMarkdownById(candidate, userID)
+	err = repository.UpdateMarkdownById(candidate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Markdown updated successfully",
+	})
 }

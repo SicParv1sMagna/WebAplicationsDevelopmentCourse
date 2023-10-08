@@ -3,7 +3,6 @@ package validators
 import (
 	"project/internal/middleware"
 	"project/internal/model"
-	"unicode"
 )
 
 func ValidateRegistrationData(user model.User) *middleware.Response {
@@ -56,22 +55,22 @@ func ValidateRegistrationData(user model.User) *middleware.Response {
 		}
 	}
 
-	hasLetter := false
-	hasDigit := false
+	// hasLetter := false
+	// hasDigit := false
 
-	for _, char := range user.Password {
-		if unicode.IsDigit(char) {
-			hasDigit = true
-		} else {
-			hasLetter = true
-		}
-		if hasDigit && hasLetter {
-			return &middleware.Response{
-				Status:  "Failed",
-				Message: "Пароль должен содержать цифры и буквы",
-			}
-		}
-	}
+	// for _, char := range user.Password {
+	// 	if unicode.IsDigit(char) {
+	// 		hasDigit = true
+	// 	} else {
+	// 		hasLetter = true
+	// 	}
+	// 	if hasDigit && hasLetter {
+	// 		return &middleware.Response{
+	// 			Status:  "Failed",
+	// 			Message: "Пароль должен содержать цифры и буквы",
+	// 		}
+	// 	}
+	// }
 
 	return &middleware.Response{
 		Status:  "Success",

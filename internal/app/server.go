@@ -17,12 +17,12 @@ func (a *Application) StartServer() {
 	//	http://localhost:8080/user
 	user := router.Group("/user")
 	{
-		//	http://localhost:8080/user/register
+		//	http://localhost:8080/user/register		ГОТОВО
 		user.POST("/register", func(c *gin.Context) {
 			delivery.RegisterUser(a.repository, c)
 		})
 
-		//	http://localhost:8080/user/login
+		//	http://localhost:8080/user/login		ГОТОВО
 		user.POST("/login", func(c *gin.Context) {
 			delivery.AuthUser(a.repository, c)
 		})
@@ -33,13 +33,13 @@ func (a *Application) StartServer() {
 	api := router.Group("/api")
 	{
 		api.Use(jwttoken.CheckJWTToken())
-		//	http://localhost:8080/api/user
+		//	http://localhost:8080/api/user		ГОТОВО
 		user := api.Group("/user")
 		{
-			//	http://localhost:8080/api/user/delete
+			//	http://localhost:8080/api/user/delete	ГОТОВО
 			user.DELETE("/delete", delivery.DeleteUser)
 
-			//	http://localhost:8080/api/user/edit-info
+			//	http://localhost:8080/api/user/edit-info	ГОТОВО
 			user.PUT("/edit-info", delivery.UpdateUserInfo)
 		}
 
@@ -49,40 +49,41 @@ func (a *Application) StartServer() {
 			//	http://localhost:8080/api/notes/markdown
 			markdowns := notes.Group("/markdown")
 			{
-				//	http://localhost:8080/api/notes/markdown/create-markdown
+				//	http://localhost:8080/api/notes/markdown/create-markdown		ГОТОВО
 				markdowns.POST("/create-markdown", func(c *gin.Context) {
 					delivery.CreateMarkdown(a.repository, c)
 				})
 
-				//	http://localhost:8080/api/notes/markdown/get-markdown
+				//	http://localhost:8080/api/notes/markdown/get-markdown	ГОТОВО
 				markdowns.GET("/get-markdown/:id", func(c *gin.Context) {
 					delivery.GetMarkdown(a.repository, c)
 				})
 
-				//	http://localhost:8080/api/notes/markdown/get-all-markdowns
+				//	http://localhost:8080/api/notes/markdown/get-all-markdowns		ГОТОВО
 				markdowns.GET("/get-all-markdowns", func(c *gin.Context) {
 					delivery.GetAllMarkdowns(a.repository, c)
 				})
 
-				//	http://localhost:8080/api/notes/markdown/delete-markdown
-				markdowns.PUT("/delete-markdown/:id", func(c *gin.Context) {
+				//	http://localhost:8080/api/notes/markdown/delete-markdown		ГОТОВО
+				markdowns.DELETE("/delete-markdown/:id", func(c *gin.Context) {
 					delivery.DeleteMarkdown(a.repository, c)
 				})
 
-				//	http://localhost:8080/api/notes/markdown/update-markdown
+				//	http://localhost:8080/api/notes/markdown/update-markdown		ГОТОВО
 				markdowns.PUT("/update-markdown", func(c *gin.Context) {
 					delivery.UpdateMarkdown(a.repository, c)
 				})
 			}
 		}
+
+		contributor := api.Group("/contributor")
+		{
+			contributor.GET("/get-contributor/:id")
+			contributor.GET("/get-all-contributors")
+			contributor.DELETE("/delete-contributor/:id")
+			contributor.PUT("/update-contributor")
+		}
 	}
-
-	// TODO: Add contributor routes
-
-	// contributor := router.Group("/contribute")
-	// {
-
-	// }
 
 	err := router.Run()
 	if err != nil {

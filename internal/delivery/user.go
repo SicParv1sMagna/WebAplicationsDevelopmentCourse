@@ -113,7 +113,11 @@ func AuthUser(repository *repository.Repository, c *gin.Context) {
 }
 
 // Обновление пользователем информации о себе
-func UpdateUserInfo(c *gin.Context) {}
+func UpdateUserInfo(c *gin.Context) {
+
+}
 
 // Удаление аккаунта пользователя
-func DeleteUser(c *gin.Context) {}
+func DeleteUser(c *gin.Context) {
+
+}

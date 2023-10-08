@@ -7,6 +7,6 @@ type User struct {
 	SecondName     string `json:"SecondName"`
 	MiddleName     string `json:"MiddleName"`
 	Email          string `json:"Email"`
-	Password       string `json:"Password"`
-	RepeatPassword string `json:"RepeatPassword"`
+	Password       string `json:"Password" gorm:"column:Password"`
+	RepeatPassword string `json:"RepeatPassword" gorm:"-"`
 }
