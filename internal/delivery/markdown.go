@@ -64,7 +64,7 @@ func GetMarkdown(repository *repository.Repository, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	fmt.Println(id)
+
 	if id < 0 {
 		c.JSON(http.StatusBadRequest, middleware.Response{
 			Status:  "Failed",

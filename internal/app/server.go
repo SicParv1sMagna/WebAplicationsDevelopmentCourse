@@ -78,10 +78,25 @@ func (a *Application) StartServer() {
 
 		contributor := api.Group("/contributor")
 		{
-			contributor.GET("/get-contributor/:id")
-			contributor.GET("/get-all-contributors")
-			contributor.DELETE("/delete-contributor/:id")
-			contributor.PUT("/update-contributor")
+			//	http://localhost:8080/api/contributor/get-contributor/:id	ГОТОВО
+			contributor.GET("/get-contributor/:id", func(c *gin.Context) {
+				delivery.GetContributor(a.repository, c)
+			})
+
+			//	http://localhost:8080/api/contributor/get-all-contributors
+			contributor.GET("/get-all-contributors/:id", func(c *gin.Context) {
+				delivery.GetAllContributorsFromMarkdown(a.repository, c)
+			})
+
+			//	http://localhost:8080/api/contributor/delete-contributor
+			contributor.DELETE("/delete-contributor", func(c *gin.Context) {
+				delivery.DeleteContributorFromMd(a.repository, c)
+			})
+
+			//	http://localhost:8080/api/contibutor/update-contributor
+			contributor.PUT("/update-contributor", func(c *gin.Context) {
+				delivery.UpdateContributorAccess(a.repository, c)
+			})
 		}
 	}
 
