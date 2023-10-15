@@ -40,3 +40,17 @@ func (r *Repository) UpdateMarkdownById(md model.Markdown) error {
 
 	return err
 }
+
+func (r *Repository) RequestContribution(contributor model.Contributor, id uint) error {
+	err := r.db.Table("contributor").Create(&contributor).Error
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Exec(`INSERT INTO document_request (markdown_id, contributor_id, Status) VALUES($1, $2, $3)`, id, contributor.Contributor_ID, "Читатель").Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

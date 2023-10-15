@@ -73,6 +73,10 @@ func (a *Application) StartServer() {
 				markdowns.PUT("/update-markdown", func(c *gin.Context) {
 					delivery.UpdateMarkdown(a.repository, c)
 				})
+
+				markdowns.POST("/request-contribution/:id", func(c *gin.Context) {
+					delivery.RequestContribution(a.repository, c)
+				})
 			}
 		}
 

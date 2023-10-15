@@ -161,3 +161,35 @@ func UpdateMarkdown(repository *repository.Repository, c *gin.Context) {
 		"message": "Markdown updated successfully",
 	})
 }
+
+func RequestContribution(repository *repository.Repository, c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	if id < 0 {
+		c.JSON(http.StatusBadRequest, middleware.Response{
+			Status:  "Failed",
+			Message: "id не может быть отрицательным",
+		})
+	}
+
+	var contributor model.Contributor
+	if err := c.BindJSON(&contributor); err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	err = repository.RequestContribution(contributor, uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, middleware.Response{
+		Status:  "Success",
+		Message: "заявка отправлена",
+	})
+}
