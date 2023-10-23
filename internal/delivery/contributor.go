@@ -27,13 +27,16 @@ func GetContributor(repository *repository.Repository, c *gin.Context) {
 		})
 	}
 
-	contributor, err = repository.GetContributorByID(uint(id))
+	contributor, markdowns, err := repository.GetContributorByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, contributor)
+	c.JSON(http.StatusOK, gin.H{
+		"contributor": contributor,
+		"markdown":    markdowns,
+	})
 }
 
 func GetAllContributorsFromMarkdown(repository *repository.Repository, c *gin.Context) {
@@ -91,8 +94,6 @@ func UpdateContributorAccess(repository *repository.Repository, c *gin.Context) 
 		return
 	}
 
-	fmt.Println(jsonData)
-
 	cid, _ := jsonData["Contributor_ID"].(float64)
 	mid, _ := jsonData["Markdown_ID"].(float64)
 	access, _ := jsonData["Access"].(string)
@@ -108,5 +109,37 @@ func UpdateContributorAccess(repository *repository.Repository, c *gin.Context) 
 	c.JSON(http.StatusOK, middleware.Response{
 		Status:  "Success",
 		Message: "Success",
+	})
+}
+
+func FilterContributors(repository *repository.Repository, c *gin.Context) {
+	var jsonData map[string]interface{}
+	if err := c.BindJSON(jsonData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+}
+
+func AddMarkdownToContributor(repository *repository.Repository, c *gin.Context) {
+	markdownID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, middleware.Response{
+			Status:  "Failed",
+			Message: "Invalid ID",
+		})
+	}
+
+	contributor, markdowns, err := repository.AddMdToLastReader(uint(markdownID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, middleware.Response{
+			Status:  "Failed",
+			Message: "Error occured",
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"contributor": contributor,
+		"markdowns":   markdowns,
 	})
 }

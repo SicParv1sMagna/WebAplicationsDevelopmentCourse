@@ -3,8 +3,8 @@ package app
 import (
 	"log"
 	"project/internal/delivery"
-	jwttoken "project/internal/middleware/jwt"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,6 +13,13 @@ func (a *Application) StartServer() {
 
 	// Создаем роутинг
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // List of allowed origins
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowCredentials: true, // Enable credentials (e.g., cookies)
+	}))
 
 	//	http://localhost:8080/user
 	user := router.Group("/user")
@@ -32,7 +39,7 @@ func (a *Application) StartServer() {
 	//	http://localhost:8080/api
 	api := router.Group("/api")
 	{
-		api.Use(jwttoken.CheckJWTToken())
+		// api.Use(jwttoken.CheckJWTToken())
 		//	http://localhost:8080/api/user		ГОТОВО
 		user := api.Group("/user")
 		{
@@ -73,10 +80,6 @@ func (a *Application) StartServer() {
 				markdowns.PUT("/update-markdown", func(c *gin.Context) {
 					delivery.UpdateMarkdown(a.repository, c)
 				})
-
-				markdowns.POST("/request-contribution/:id", func(c *gin.Context) {
-					delivery.RequestContribution(a.repository, c)
-				})
 			}
 		}
 
@@ -100,6 +103,14 @@ func (a *Application) StartServer() {
 			//	http://localhost:8080/api/contibutor/update-contributor
 			contributor.PUT("/update-contributor", func(c *gin.Context) {
 				delivery.UpdateContributorAccess(a.repository, c)
+			})
+
+			contributor.GET("/filter-contributors", func(c *gin.Context) {
+				delivery.FilterContributors(a.repository, c)
+			})
+
+			contributor.PUT("/add-markdown-to-contributor/:id", func(c *gin.Context) {
+				delivery.AddMarkdownToContributor(a.repository, c)
 			})
 		}
 	}

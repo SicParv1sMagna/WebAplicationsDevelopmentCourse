@@ -9,4 +9,5 @@ type Contributor struct {
 	Created_Date    time.Time `json:"start_date"`
 	Formed_Date     time.Time `json:"start_date"`
 	Completion_Date time.Time `json:"start_date"`
+	Status          string
 }
