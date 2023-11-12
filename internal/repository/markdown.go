@@ -54,3 +54,15 @@ func (r *Repository) RequestContribution(contributor model.Contributor, id uint)
 
 	return nil
 }
+
+func (r *Repository) SearchMarkdown(query string) ([]model.Markdown, error) {
+	var markdowns []model.Markdown
+
+	sqlname := "%" + query + "%"
+
+	if err := r.db.Table("Markdown").Where(`"Name" LIKE ? AND "Status" = 'Активен'`, sqlname).Find(&markdowns).Error; err != nil {
+		return nil, err
+	}
+
+	return markdowns, nil
+}

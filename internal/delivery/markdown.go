@@ -1,7 +1,6 @@
 package delivery
 
 import (
-	"fmt"
 	"net/http"
 	"project/internal/middleware"
 	jwttoken "project/internal/middleware/jwt"
@@ -18,7 +17,7 @@ func CreateMarkdown(repository *repository.Repository, c *gin.Context) {
 
 	token, err := c.Cookie("jwtToken")
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, err)
+		c.JSON(http.StatusUnauthorized, err.Error())
 	}
 
 	userID, err := jwttoken.GetUserIDbyToken(token)
@@ -32,10 +31,9 @@ func CreateMarkdown(repository *repository.Repository, c *gin.Context) {
 
 	// Достаем данные из JSON'а из запроса
 	if err := c.BindJSON(&markdown); err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
-	fmt.Println(markdown)
 
 	//	Валиидруем название markdown'а
 	if err := validators.ValidateMarkdown(markdown); err.Status == "Failed" {
@@ -46,7 +44,7 @@ func CreateMarkdown(repository *repository.Repository, c *gin.Context) {
 	markdown.User_ID = uint(userID)
 
 	if err := repository.CreateMarkdown(markdown); err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -61,7 +59,7 @@ func GetMarkdown(repository *repository.Repository, c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -75,7 +73,7 @@ func GetMarkdown(repository *repository.Repository, c *gin.Context) {
 
 	md, err = repository.GetMarkdownById(uint(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -87,7 +85,7 @@ func GetAllMarkdowns(repository *repository.Repository, c *gin.Context) {
 
 	md, err := repository.GetAllMarkdowns()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -97,7 +95,7 @@ func GetAllMarkdowns(repository *repository.Repository, c *gin.Context) {
 func DeleteMarkdown(repository *repository.Repository, c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -110,13 +108,13 @@ func DeleteMarkdown(repository *repository.Repository, c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	err = repository.DeleteMarkdownById(uint(id))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err)
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 }
@@ -139,7 +137,7 @@ func UpdateMarkdown(repository *repository.Repository, c *gin.Context) {
 
 	candidate, err := repository.GetMarkdownById(uint(mdID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -160,4 +158,15 @@ func UpdateMarkdown(repository *repository.Repository, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Markdown updated successfully",
 	})
+}
+
+func SearchMarkdown(repository *repository.Repository, c *gin.Context) {
+	query := c.DefaultQuery("query", "")
+
+	md, err := repository.SearchMarkdown(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	c.JSON(http.StatusOK, md)
 }

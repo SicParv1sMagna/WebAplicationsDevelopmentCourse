@@ -112,15 +112,6 @@ func UpdateContributorAccess(repository *repository.Repository, c *gin.Context) 
 	})
 }
 
-func FilterContributors(repository *repository.Repository, c *gin.Context) {
-	var jsonData map[string]interface{}
-	if err := c.BindJSON(jsonData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-}
-
 func AddMarkdownToContributor(repository *repository.Repository, c *gin.Context) {
 	markdownID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
