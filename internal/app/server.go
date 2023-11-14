@@ -60,38 +60,45 @@ func (a *Application) StartServer() {
 			{
 				// ДОБАВЛЕНИЕ УСЛУГИ
 				//	http://localhost:8080/api/notes/markdown/create-markdown		ГОТОВО
-				markdowns.POST("/create-markdown", func(c *gin.Context) {
+				markdowns.POST("/create", func(c *gin.Context) {
 					delivery.CreateMarkdown(a.repository, c)
 				})
 
 				// ПОЛУЧЕНИЕ УСЛУГ
-				//	http://localhost:8080/api/notes/markdown/get-markdown	ГОТОВО
-				markdowns.GET("/get-markdown/:id", func(c *gin.Context) {
+				//	http://localhost:8080/api/notes/markdown/:id	ГОТОВО
+				markdowns.GET("/:id", func(c *gin.Context) {
 					delivery.GetMarkdown(a.repository, c)
 				})
 
 				// СПИСОК УСЛУГ
-				//	http://localhost:8080/api/notes/markdown/get-all-markdowns		ГОТОВО
-				markdowns.GET("/get-all-markdowns", func(c *gin.Context) {
+				//	http://localhost:8080/api/notes/markdown/		ГОТОВО
+				markdowns.GET("/", func(c *gin.Context) {
 					delivery.GetAllMarkdowns(a.repository, c)
 				})
 
 				// УДАЛЕНИЕ УСЛУГИ
 				//	http://localhost:8080/api/notes/markdown/delete-markdown		ГОТОВО
-				markdowns.DELETE("/delete-markdown/:id", func(c *gin.Context) {
+				markdowns.DELETE("/:id", func(c *gin.Context) {
 					delivery.DeleteMarkdown(a.repository, c)
 				})
 
 				// РЕДАКТИРОВАНИЕ УСЛУГИ
 				//	http://localhost:8080/api/notes/markdown/update-markdown		ГОТОВО
-				markdowns.PUT("/update-markdown", func(c *gin.Context) {
+				markdowns.PUT("/", func(c *gin.Context) {
 					delivery.UpdateMarkdown(a.repository, c)
 				})
 
-				// ФИЛЬТРАЦИЯ ?
-				//	http://localhost:8080/api/notes/markdown/search/query=?		ГОТОВО
-				markdowns.GET("/search", func(c *gin.Context) {
-					delivery.SearchMarkdown(a.repository, c)
+				// ДОБАВЛЕНИЕ УСЛУГИ В ПОСЛЕДНЮЮ ЗАЯВКУ
+				markdowns.POST("/:id/contributor", func(c *gin.Context) {
+					delivery.AddMarkdownToContributor(a.repository, c)
+				})
+
+				markdowns.DELETE("/:id/contributor/delete", func(c *gin.Context) {
+					delivery.DeleteContributorFromMd(a.repository, c)
+				})
+
+				markdowns.POST("/:id/image", func(c *gin.Context) {
+					delivery.AddMarkdownIcon(a.repository, c)
 				})
 			}
 		}
@@ -101,32 +108,25 @@ func (a *Application) StartServer() {
 		{
 			// ПОЛУЧЕНИЕ ЗАЯВКИ
 			//	http://localhost:8080/api/contributor/get-contributor/:id	ГОТОВО
-			contributor.GET("/get-contributor/:id", func(c *gin.Context) {
+			contributor.GET("/:id", func(c *gin.Context) {
 				delivery.GetContributor(a.repository, c)
 			})
 
 			// СПИСОК ЗАЯВОК
 			//	http://localhost:8080/api/contributor/get-all-contributors
-			contributor.GET("/get-all-contributors/:id", func(c *gin.Context) {
+			contributor.GET("/", func(c *gin.Context) {
 				delivery.GetAllContributorsFromMarkdown(a.repository, c)
 			})
 
-			// УДАЛЕНИЕ ЗАЯВКИ
-			//	http://localhost:8080/api/contributor/delete-contributor
-			contributor.DELETE("/delete-contributor", func(c *gin.Context) {
-				delivery.DeleteContributorFromMd(a.repository, c)
-			})
-
+			contributor.DELETE("/:id/delete")
 			// РЕДАКТИРОВАНИЕ ЗАЯВКИ
 			//	http://localhost:8080/api/contibutor/update-contributor
-			contributor.PUT("/update-contributor", func(c *gin.Context) {
+			contributor.PUT("/", func(c *gin.Context) {
 				delivery.UpdateContributorAccess(a.repository, c)
 			})
 
-			// ДОБАВЛЕНИЕ УСЛУГИ В ПОСЛЕДНЮЮ ЗАЯВКУ
-			contributor.PUT("/add-markdown-to-contributor/:id", func(c *gin.Context) {
-				delivery.AddMarkdownToContributor(a.repository, c)
-			})
+			contributor.PUT("/:id/status/user")
+			contributor.PUT("/:id/status/moderator")
 		}
 	}
 

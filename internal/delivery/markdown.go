@@ -1,6 +1,8 @@
 package delivery
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"project/internal/middleware"
 	jwttoken "project/internal/middleware/jwt"
@@ -83,7 +85,9 @@ func GetMarkdown(repository *repository.Repository, c *gin.Context) {
 func GetAllMarkdowns(repository *repository.Repository, c *gin.Context) {
 	var md []model.Markdown
 
-	md, err := repository.GetAllMarkdowns()
+	name := c.DefaultQuery("name", "")
+
+	md, err := repository.GetAllMarkdowns(name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -169,4 +173,94 @@ func SearchMarkdown(repository *repository.Repository, c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, md)
+}
+
+func AddMarkdownToContributor(repository *repository.Repository, c *gin.Context) {
+	markdownID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, middleware.Response{
+			Status:  "Failed",
+			Message: "Invalid ID",
+		})
+	}
+
+	contributor, markdowns, err := repository.AddMdToLastReader(uint(markdownID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, middleware.Response{
+			Status:  "Failed",
+			Message: "Error occured",
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"contributor": contributor,
+		"markdowns":   markdowns,
+	})
+}
+
+func DeleteContributorFromMd(repository *repository.Repository, c *gin.Context) {
+	var jsonData map[string]interface{}
+	if err := c.BindJSON(&jsonData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cid, cidOk := jsonData["Contributor_ID"].(float64)
+	mid, midOk := jsonData["Markdown_ID"].(float64)
+
+	if !cidOk || !midOk || mid <= 0 || cid <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid data",
+		})
+	}
+
+	fmt.Println(cid, mid)
+
+	err := repository.DeleteContributorFromMd(uint(mid), uint(cid))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, middleware.Response{
+		Status:  "Success",
+		Message: "Success",
+	})
+}
+
+func AddMarkdownIcon(repository *repository.Repository, c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "недоступный ID багажа"})
+		return
+	}
+
+	image, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "недопустимое изображение"})
+		return
+	}
+
+	file, err := image.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "не удалось открыть изображение"})
+		return
+	}
+	defer file.Close()
+
+	imageBytes, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "не удалось прочитать изображение"})
+		return
+	}
+
+	contentType := image.Header.Get("Content-Type")
+
+	err = repository.AddMarkdownIcon(id, imageBytes, contentType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "изображение успешно загружено"})
 }

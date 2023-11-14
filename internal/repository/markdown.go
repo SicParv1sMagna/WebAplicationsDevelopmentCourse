@@ -1,7 +1,10 @@
 package repository
 
 import (
+	"errors"
 	"project/internal/model"
+
+	"gorm.io/gorm"
 )
 
 func (r *Repository) CreateMarkdown(md model.Markdown) error {
@@ -10,10 +13,11 @@ func (r *Repository) CreateMarkdown(md model.Markdown) error {
 	return err
 }
 
-func (r *Repository) GetAllMarkdowns() ([]model.Markdown, error) {
+func (r *Repository) GetAllMarkdowns(name string) ([]model.Markdown, error) {
+	name = "%" + name + "%"
 	var markdowns []model.Markdown
 
-	err := r.db.Table("Markdown").Find(&markdowns).Error
+	err := r.db.Table("Markdown").Where(`("Status" = 'Активен' OR "Status" = 'Черновик') AND LOWER("Name") LIKE LOWER(?)`, name).Find(&markdowns).Error
 
 	return markdowns, err
 }
@@ -65,4 +69,68 @@ func (r *Repository) SearchMarkdown(query string) ([]model.Markdown, error) {
 	}
 
 	return markdowns, nil
+}
+
+func (r *Repository) AddMdToLastReader(id uint) (model.MarkdownContributor, model.Markdown, error) {
+	var markdown model.Markdown
+	var markdownReader model.MarkdownContributor
+	err := r.db.
+		Table("document_request").
+		Where(`"Status" = ?`, "Читатель").
+		First(&markdownReader).
+		Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return markdownReader, markdown, err
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		markdownReader := model.MarkdownContributor{
+			Markdown_ID:    id,
+			Contributor_ID: 1,
+			Status:         "Читатель",
+		}
+		if err := r.db.Table("document_request").Create(&markdownReader).Error; err != nil {
+			return markdownReader, markdown, err
+		}
+	}
+
+	if err := r.db.Table("Markdown").First(&markdown, id).Error; err != nil {
+		return markdownReader, markdown, err
+	}
+
+	if err := r.db.Table("document_request").Create(model.MarkdownContributor{
+		Contributor_ID: uint(markdownReader.Contributor_ID),
+		Markdown_ID:    uint(markdown.Markdown_ID),
+		Status:         "Редактор",
+	}).Error; err != nil {
+		return markdownReader, markdown, err
+	}
+
+	return markdownReader, markdown, err
+}
+
+func (r *Repository) DeleteContributorFromMd(id, cid uint) error {
+	err := r.db.Table("Document_Request").Where("Contributor_ID = ? AND Markdown_ID = ?", cid, id).Set(`"Status" = ?`, "Удален").Error
+
+	return err
+}
+
+func (r *Repository) AddMarkdownIcon(id int, imageBytes []byte, contentType string) error {
+	// err := r.minio.RemoveServiceImage(id)
+	// if err != nil {
+	// 	return err
+	// }
+
+	imageURL, err := r.minio.UploadServiceImage(id, imageBytes, contentType)
+	if err != nil {
+		return err
+	}
+
+	err = r.db.Table("Markdown").Where("Markdown_ID = ?", id).Update("PhotoURL", imageURL).Error
+	if err != nil {
+		return errors.New("ошибка обновления url изображения в БД")
+	}
+
+	return nil
 }
