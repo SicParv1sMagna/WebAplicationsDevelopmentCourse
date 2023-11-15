@@ -10,6 +10,7 @@ import (
 	"project/internal/model"
 	"project/internal/repository"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -164,27 +165,20 @@ func UpdateMarkdown(repository *repository.Repository, c *gin.Context) {
 	})
 }
 
-func SearchMarkdown(repository *repository.Repository, c *gin.Context) {
-	query := c.DefaultQuery("query", "")
-
-	md, err := repository.SearchMarkdown(query)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	c.JSON(http.StatusOK, md)
-}
-
 func AddMarkdownToContributor(repository *repository.Repository, c *gin.Context) {
-	markdownID, err := strconv.Atoi(c.Param("id"))
+	markdownID, err := strconv.Atoi(c.Param("markdown_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, middleware.Response{
-			Status:  "Failed",
-			Message: "Invalid ID",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "неверный ID"})
+		return
 	}
 
-	contributor, markdowns, err := repository.AddMdToLastReader(uint(markdownID))
+	contributorID, err := strconv.Atoi(c.Param("contributor_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "неверный ID"})
+		return
+	}
+
+	contributor, markdowns, err := repository.AddMdToLastReader(uint(markdownID), uint(contributorID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, middleware.Response{
 			Status:  "Failed",
@@ -263,4 +257,65 @@ func AddMarkdownIcon(repository *repository.Repository, c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "изображение успешно загружено"})
+}
+
+func RequestContribution(repository *repository.Repository, c *gin.Context) {
+	token, err := c.Cookie("jwtToken")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	userID, err := jwttoken.GetUserIDbyToken(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, middleware.Response{
+			Status:  "Failed",
+			Message: "Unauthorized",
+		})
+		return
+	}
+
+	markdownID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, middleware.Response{
+			Status:  "Failed",
+			Message: err.Error(),
+		})
+	}
+
+	candidates, err := repository.GetContributorsByMarkdownID("", "", "", "", uint(markdownID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	for i := 0; i < len(candidates); i++ {
+		if uint(candidates[i].User_ID) == userID {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "вы уже подали запрос на редактирование"})
+			return
+		}
+	}
+
+	user, err := repository.GetUserById(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, middleware.Response{
+			Status:  "Failed",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	contributor := model.Contributor{
+		User_ID:      int(userID),
+		Created_Date: time.Now(),
+		Email:        user.Email,
+	}
+
+	err = repository.RequestContribution(contributor, uint(markdownID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"error": "заявка успешно создана"})
 }

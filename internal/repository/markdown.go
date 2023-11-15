@@ -51,7 +51,13 @@ func (r *Repository) RequestContribution(contributor model.Contributor, id uint)
 		return err
 	}
 
-	err = r.db.Exec(`INSERT INTO document_request (markdown_id, contributor_id, Status) VALUES($1, $2, $3)`, id, contributor.Contributor_ID, "Читатель").Error
+	markdownContributor := model.MarkdownContributor{
+		Markdown_ID:    id,
+		Contributor_ID: uint(contributor.Contributor_ID),
+		Status:         "Читатель",
+	}
+
+	err = r.db.Table("document_request").Create(&markdownContributor).Error
 	if err != nil {
 		return err
 	}
@@ -71,7 +77,7 @@ func (r *Repository) SearchMarkdown(query string) ([]model.Markdown, error) {
 	return markdowns, nil
 }
 
-func (r *Repository) AddMdToLastReader(id uint) (model.MarkdownContributor, model.Markdown, error) {
+func (r *Repository) AddMdToLastReader(markdown_id, contributor_id uint) (model.MarkdownContributor, model.Markdown, error) {
 	var markdown model.Markdown
 	var markdownReader model.MarkdownContributor
 	err := r.db.
@@ -86,8 +92,8 @@ func (r *Repository) AddMdToLastReader(id uint) (model.MarkdownContributor, mode
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		markdownReader := model.MarkdownContributor{
-			Markdown_ID:    id,
-			Contributor_ID: 1,
+			Markdown_ID:    markdown_id,
+			Contributor_ID: contributor_id,
 			Status:         "Читатель",
 		}
 		if err := r.db.Table("document_request").Create(&markdownReader).Error; err != nil {
@@ -95,7 +101,7 @@ func (r *Repository) AddMdToLastReader(id uint) (model.MarkdownContributor, mode
 		}
 	}
 
-	if err := r.db.Table("Markdown").First(&markdown, id).Error; err != nil {
+	if err := r.db.Table("Markdown").First(&markdown, markdown_id).Error; err != nil {
 		return markdownReader, markdown, err
 	}
 

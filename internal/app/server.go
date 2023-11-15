@@ -64,12 +64,6 @@ func (a *Application) StartServer() {
 					delivery.CreateMarkdown(a.repository, c)
 				})
 
-				// ПОЛУЧЕНИЕ УСЛУГ
-				//	http://localhost:8080/api/notes/markdown/:id	ГОТОВО
-				markdowns.GET("/:id", func(c *gin.Context) {
-					delivery.GetMarkdown(a.repository, c)
-				})
-
 				// СПИСОК УСЛУГ
 				//	http://localhost:8080/api/notes/markdown/		ГОТОВО
 				markdowns.GET("/", func(c *gin.Context) {
@@ -89,16 +83,18 @@ func (a *Application) StartServer() {
 				})
 
 				// ДОБАВЛЕНИЕ УСЛУГИ В ПОСЛЕДНЮЮ ЗАЯВКУ
-				markdowns.POST("/:id/contributor", func(c *gin.Context) {
+				markdowns.POST("/add-md-to-contributor", func(c *gin.Context) {
 					delivery.AddMarkdownToContributor(a.repository, c)
-				})
-
-				markdowns.DELETE("/:id/contributor/delete", func(c *gin.Context) {
-					delivery.DeleteContributorFromMd(a.repository, c)
 				})
 
 				markdowns.POST("/:id/image", func(c *gin.Context) {
 					delivery.AddMarkdownIcon(a.repository, c)
+				})
+
+				// ПОЛУЧЕНИЕ УСЛУГ
+				//	http://localhost:8080/api/notes/markdown/:id	ГОТОВО
+				markdowns.GET("/:id", func(c *gin.Context) {
+					delivery.GetMarkdown(a.repository, c)
 				})
 			}
 		}
@@ -114,19 +110,30 @@ func (a *Application) StartServer() {
 
 			// СПИСОК ЗАЯВОК
 			//	http://localhost:8080/api/contributor/get-all-contributors
-			contributor.GET("/", func(c *gin.Context) {
+			contributor.GET("/:id/markdown", func(c *gin.Context) {
 				delivery.GetAllContributorsFromMarkdown(a.repository, c)
 			})
 
-			contributor.DELETE("/:id/delete")
+			contributor.GET("/", func(c *gin.Context) {
+				delivery.GetAllContirbutors(a.repository, c)
+			})
+
+			contributor.DELETE("/:id/delete", func(c *gin.Context) {
+				delivery.DeleteContributorFromMd(a.repository, c)
+			})
 			// РЕДАКТИРОВАНИЕ ЗАЯВКИ
 			//	http://localhost:8080/api/contibutor/update-contributor
-			contributor.PUT("/", func(c *gin.Context) {
+			contributor.PUT("/moderator", func(c *gin.Context) {
 				delivery.UpdateContributorAccess(a.repository, c)
 			})
 
-			contributor.PUT("/:id/status/user")
-			contributor.PUT("/:id/status/moderator")
+			contributor.PUT("/:id/user", func(c *gin.Context) {
+				delivery.RequestContribution(a.repository, c)
+			})
+
+			contributor.PUT("/:id", func(c *gin.Context) {
+				delivery.UpdateContributorData(a.repository, c)
+			})
 		}
 	}
 

@@ -6,8 +6,8 @@ import "time"
 type Contributor struct {
 	Contributor_ID  int `gorm:"primarykey;autoIncrement"`
 	User_ID         int
-	Created_Date    time.Time `json:"start_date"`
-	Formed_Date     time.Time `json:"start_date"`
-	Completion_Date time.Time `json:"start_date"`
-	Status          string
+	Created_Date    time.Time `json:"created_date"`
+	Formed_Date     time.Time `json:"formed_date"`
+	Completion_Date time.Time `json:"completion_date"`
+	Email           string    `json:"email" gorm:"column:email"`
 }

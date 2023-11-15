@@ -31,3 +31,10 @@ func (r *Repository) EditUserData(user model.User, uID uint) error {
 	err := r.db.Table(`"User"`).Where("User_ID = ?", uID).Updates(&user).Error
 	return err
 }
+
+func (r *Repository) GetUserById(id uint) (model.User, error) {
+	var user model.User
+	err := r.db.Table(`"User"`).Where("User_ID = ?", id).First(&user).Error
+
+	return user, err
+}
