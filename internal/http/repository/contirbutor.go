@@ -64,20 +64,36 @@ func (r *Repository) GetContributorsByMarkdownID(email string, status string, st
 	return contributors, nil
 }
 
-func (r *Repository) UpdateContributorAccess(id, cid uint, newStatus string) error {
-	err := r.db.Table("Document_Request").Where("Contributor_ID = ? AND Markdown_ID = ?", cid, id).Set(`"Status" = ?`, newStatus).Error
+func (r *Repository) UpdateContributorAccessByModerator(id, cid uint, newStatus string) error {
+	err := r.db.Table("document_request").Where("Contributor_ID = ? AND Markdown_ID = ?", cid, id).Update(`Status`, newStatus).Error
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Table("contributor").Where("contributor_id = ?", cid).Set(`"formed_date" = ?`, time.Now()).Error
+	currentTime := time.Now()
+
+	err = r.db.Table("contributor").Where("contributor_id = ?", cid).Update(`"completion_date"`, currentTime).Error
 	if err != nil {
 		return err
 	}
 
-	err = r.db.Table("contributor").Where("contributor_id = ?", cid).Set(`"completion_date" = ?`, time.Now()).Error
+	return nil
+}
 
-	return err
+func (r *Repository) UpdateContributorAccessByAdmin(id, cid uint, newStatus string) error {
+	err := r.db.Table("document_request").Where("Contributor_ID = ? AND Markdown_ID = ?", cid, id).Update(`Status`, newStatus).Error
+	if err != nil {
+		return err
+	}
+
+	currentTime := time.Now()
+
+	err = r.db.Table("contributor").Where("contributor_id = ?", cid).Update(`"formed_date"`, currentTime).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Repository) GetAllContributors(email, status, start_date, end_date string) ([]model.Contributor, error) {
@@ -117,4 +133,14 @@ func (r *Repository) UpdateContributorData(id uint, email string) error {
 	err := r.db.Table("contributor").Where("contributor_id = ?", id).Set("email = ?", email).Error
 
 	return err
+}
+
+func (r *Repository) GetContributorStatus(cid, mid uint) (string, error) {
+	var markdownContributor model.MarkdownContributor
+	err := r.db.Table("document_request").Where("markdown_id = ? AND contributor_id = ?", mid, cid).First(&markdownContributor).Error
+	if err != nil {
+		return "", err
+	}
+
+	return markdownContributor.Status, nil
 }

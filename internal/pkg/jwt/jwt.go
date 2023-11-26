@@ -3,7 +3,6 @@ package jwttoken
 import (
 	"fmt"
 	"net/http"
-	"project/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
@@ -41,20 +40,14 @@ func CheckJWTToken() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, middleware.Response{
-				Status:  "Failed",
-				Message: "Unauthorized",
-			})
+			c.JSON(http.StatusUnauthorized, "сперва авторизируйтесь")
 			c.Abort()
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, middleware.Response{
-				Status:  "Failed",
-				Message: "Unauthorized",
-			})
+			c.JSON(http.StatusUnauthorized, "сперва авторизируйтесь")
 			c.Abort()
 			return
 		}

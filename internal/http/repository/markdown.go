@@ -77,43 +77,25 @@ func (r *Repository) SearchMarkdown(query string) ([]model.Markdown, error) {
 	return markdowns, nil
 }
 
-func (r *Repository) AddMdToLastReader(markdown_id, contributor_id uint) (model.MarkdownContributor, model.Markdown, error) {
-	var markdown model.Markdown
-	var markdownReader model.MarkdownContributor
-	err := r.db.
-		Table("document_request").
-		Where(`"Status" = ?`, "Читатель").
-		First(&markdownReader).
-		Error
-
+func (r *Repository) AddMarkdownToLastDraft(markdown_id, contributor_id uint) error {
+	var markdown_contributor model.MarkdownContributor
+	err := r.db.Table(`document_request`).Where("markdown_id = ? AND contributor_id = ? AND Status=`Черновик`", markdown_id, contributor_id).Find(&markdown_contributor).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return markdownReader, markdown, err
+		return err
 	}
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		markdownReader := model.MarkdownContributor{
-			Markdown_ID:    markdown_id,
-			Contributor_ID: contributor_id,
-			Status:         "Читатель",
-		}
-		if err := r.db.Table("document_request").Create(&markdownReader).Error; err != nil {
-			return markdownReader, markdown, err
-		}
+	markdown_contributor = model.MarkdownContributor{
+		Markdown_ID:    markdown_id,
+		Contributor_ID: contributor_id,
+		Status:         "Черновик",
 	}
 
-	if err := r.db.Table("Markdown").First(&markdown, markdown_id).Error; err != nil {
-		return markdownReader, markdown, err
+	err = r.db.Table("document_request").Create(&markdown_contributor).Error
+	if err != nil {
+		return err
 	}
 
-	if err := r.db.Table("document_request").Create(model.MarkdownContributor{
-		Contributor_ID: uint(markdownReader.Contributor_ID),
-		Markdown_ID:    uint(markdown.Markdown_ID),
-		Status:         "Редактор",
-	}).Error; err != nil {
-		return markdownReader, markdown, err
-	}
-
-	return markdownReader, markdown, err
+	return err
 }
 
 func (r *Repository) DeleteContributorFromMd(id, cid uint) error {

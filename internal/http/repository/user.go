@@ -1,6 +1,10 @@
 package repository
 
-import "project/internal/model"
+import (
+	"project/internal/model"
+	"strconv"
+	"time"
+)
 
 // Создание пользователя
 func (r *Repository) CreateUser(user model.User) error {
@@ -37,4 +41,17 @@ func (r *Repository) GetUserById(id uint) (model.User, error) {
 	err := r.db.Table(`"User"`).Where("User_ID = ?", id).First(&user).Error
 
 	return user, err
+}
+
+func (r *Repository) SaveJWTToken(id uint, token string) error {
+	expiration := time.Hour * 24 * 3
+
+	idStr := strconv.FormatUint(uint64(id), 10)
+
+	err := r.redis.Set(idStr, token, expiration).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
