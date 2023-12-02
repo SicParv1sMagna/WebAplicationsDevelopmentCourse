@@ -51,7 +51,7 @@ func (d *Delivery) GetAllContributorsFromMarkdown(c *gin.Context) {
 func (d *Delivery) UpdateContributorAccessByModerator(c *gin.Context) {
 	var jsonData map[string]interface{}
 	if err := c.BindJSON(&jsonData); err != nil {
-		c.JSON(http.StatusBadRequest, errors.New("ошибка при получении данных"))
+		c.JSON(http.StatusBadRequest, errors.New("ошибка при получении данных").Error())
 		return
 	}
 

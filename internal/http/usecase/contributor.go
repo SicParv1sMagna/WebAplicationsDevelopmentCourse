@@ -63,18 +63,15 @@ func (uc *UseCase) UpdateContributorAccessByModerator(jsonData map[string]interf
 		return errors.New("нельзя вернуть статус в черновик")
 	}
 
-	currentStatus, err := uc.Repository.GetContributorStatus(uint(cid), uint(mid))
+	// currentStatus, err := uc.Repository.GetContributorStatus(uint(cid), uint(mid))
+	// if err != nil {
+	// return errors.New("ошибка при получении данных о статусе")
+	// }
+	err := uc.Repository.UpdateContributorAccessByModerator(uint(mid), uint(cid), access)
 	if err != nil {
-		return errors.New("ошибка при получении данных о статусе")
+		return err
 	}
-	if currentStatus == "В работе" {
-		err = uc.Repository.UpdateContributorAccessByModerator(uint(mid), uint(cid), access)
-		if err != nil {
-			return errors.New("ошибка при обновлении статуса")
-		}
-		return nil
-	}
-	return errors.New("невозможно обновить статус заявки")
+	return nil
 }
 
 func (uc *UseCase) UpdateContributorAccessByAdmin(jsonData map[string]interface{}) error {
