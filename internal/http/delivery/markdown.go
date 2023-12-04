@@ -14,17 +14,7 @@ import (
 func (d *Delivery) CreateMarkdown(c *gin.Context) {
 	var markdownReq model.Markdown
 
-	token, err := c.Cookie("jwtToken")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	userID, err := jwttoken.GetUserIDbyToken(token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, errors.New("перед созданием необходимо авторизоваться"))
-		return
-	}
+	userID := c.MustGet("UserID").(int)
 
 	// Достаем данные из JSON'а из запроса
 	if err := c.BindJSON(&markdownReq); err != nil {

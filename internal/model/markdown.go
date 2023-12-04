@@ -10,5 +10,5 @@ type Markdown struct {
 	Status       string    `json:"Status" gorm:"column:Status"`
 	Created_Time time.Time `json:"start_date"`
 	User_ID      uint
-	PhotoURL     string `json:"Photo_URL"`
+	PhotoURL     string `json:"PhotoURL" gorm:"column:PhotoURL"`
 }

@@ -5,7 +5,7 @@ import (
 	"project/internal/model"
 )
 
-func ValidateRegistrationData(user model.User) error {
+func ValidateRegistrationData(user model.UserRegisterReq) error {
 	if user.FirstName == "" {
 		return errors.New("имя должно быть заполнено")
 	}
@@ -37,7 +37,7 @@ func ValidateRegistrationData(user model.User) error {
 	return nil
 }
 
-func ValidateAuthorizationData(user model.User) error {
+func ValidateAuthorizationData(user model.UserAuthReq) error {
 	if user.Password == "" {
 		return errors.New("пароль не должен быть пустым")
 	}

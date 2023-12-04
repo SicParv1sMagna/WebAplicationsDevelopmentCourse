@@ -3,16 +3,19 @@ package jwttoken
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
-func GenerateJWTToken(userID uint) (string, error) {
+func GenerateJWTToken(userID uint, role int) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["userID"] = userID
+	claims["role"] = role
+	claims["exp"] = time.Hour * 24
 
 	tokenString, err := token.SignedString([]byte("SuperSecretKey"))
 	if err != nil {

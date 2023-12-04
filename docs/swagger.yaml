@@ -1,0 +1,106 @@
+definitions:
+  model.User:
+    properties:
+      Email:
+        type: string
+      FirstName:
+        type: string
+      MiddleName:
+        type: string
+      Password:
+        type: string
+      RepeatPassword:
+        type: string
+      Role:
+        type: string
+      SecondName:
+        type: string
+      User_ID:
+        type: integer
+    type: object
+  model.UserAuthReq:
+    properties:
+      Email:
+        type: string
+      Password:
+        type: string
+    type: object
+  model.UserRegisterReq:
+    properties:
+      Email:
+        type: string
+      FirstName:
+        type: string
+      MiddleName:
+        type: string
+      Password:
+        type: string
+      RepeatPassword:
+        type: string
+      SecondName:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Авторизация
+      parameters:
+      - description: Информация пользователя для авторизации
+        in: body
+        name: userReq
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserAuthReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токен для авторизации
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Авторизовать пользователя
+      tags:
+      - users
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрация нового пользователя
+      parameters:
+      - description: Информация пользователя, необходимая для регистрации
+        in: body
+        name: userReq
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserRegisterReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Зарегистрировать нового пользователя
+      tags:
+      - users
+swagger: "2.0"
