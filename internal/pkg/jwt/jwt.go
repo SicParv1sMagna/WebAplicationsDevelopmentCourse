@@ -27,14 +27,13 @@ func GenerateJWTToken(userID uint, role int) (string, error) {
 
 func CheckJWTToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fmt.Println("entered")
 		cookie, err := c.Cookie("jwtToken")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err)
 			c.Abort()
 			return
 		}
-		fmt.Println(cookie)
+
 		token, err := jwt.Parse(cookie, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("неправильный метод подписи")

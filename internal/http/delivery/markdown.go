@@ -2,10 +2,8 @@ package delivery
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"project/internal/model"
-	jwttoken "project/internal/pkg/jwt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -97,14 +95,9 @@ func (d *Delivery) AddMarkdownToContributor(c *gin.Context) {
 		return
 	}
 
-	contributorID, err := strconv.Atoi(c.Param("contributor_id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "неверный ID"})
-		return
-	}
+	userID := c.MustGet("UserID").(int)
 
-	fmt.Println(markdownID, contributorID)
-	if err = d.usecase.AddMarkdownToContributor(uint(markdownID), uint(contributorID)); err != nil {
+	if err = d.usecase.AddMarkdownToContributor(uint(markdownID), uint(userID)); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
@@ -112,13 +105,15 @@ func (d *Delivery) AddMarkdownToContributor(c *gin.Context) {
 }
 
 func (d *Delivery) DeleteContributorFromMd(c *gin.Context) {
-	var jsonData map[string]interface{}
-	if err := c.BindJSON(&jsonData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	userID := c.MustGet("UserID").(int)
+
+	markdownID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ошибка при получении данных"})
 		return
 	}
 
-	if err := d.usecase.DeleteContributorFromMd(jsonData); err != nil {
+	if err := d.usecase.DeleteContributorFromMd(markdownID, userID); err != nil {
 		c.JSON(http.StatusOK, err.Error())
 		return
 	}
@@ -139,26 +134,17 @@ func (d *Delivery) AddMarkdownIcon(c *gin.Context) {
 		return
 	}
 
-	if err = d.usecase.AddMarkdownIcon(uint(id), image); err != nil {
+	url, err := d.usecase.AddMarkdownIcon(uint(id), image)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, "иконка добавлена")
+	c.JSON(http.StatusOK, url)
 }
 
 func (d *Delivery) RequestContribution(c *gin.Context) {
-	token, err := c.Cookie("jwtToken")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	userID, err := jwttoken.GetUserIDbyToken(token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, errors.New("неавторизован"))
-		return
-	}
+	userID := c.MustGet("UserID").(int)
 
 	markdownID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -166,7 +152,7 @@ func (d *Delivery) RequestContribution(c *gin.Context) {
 		return
 	}
 
-	if err = d.usecase.RequestContribution(userID, uint(markdownID)); err != nil {
+	if err = d.usecase.RequestContribution(uint(userID), uint(markdownID)); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}

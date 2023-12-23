@@ -15,7 +15,11 @@ func (d *Delivery) GetContributor(c *gin.Context) {
 		return
 	}
 
-	contributor, markdowns, err := d.usecase.GetContributor(uint(id))
+	start_date := c.DefaultQuery("start_date", "")
+	end_date := c.DefaultQuery("end_date", "")
+	status := c.DefaultQuery("status", "")
+
+	contributor, markdowns, err := d.usecase.GetContributor(uint(id), start_date, end_date, status)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -50,7 +54,7 @@ func (d *Delivery) GetAllContributorsFromMarkdown(c *gin.Context) {
 
 func (d *Delivery) UpdateContributorAccessByModerator(c *gin.Context) {
 	var jsonData map[string]interface{}
-	if err := c.BindJSON(&jsonData); err != nil {
+	if err := c.ShouldBindJSON(&jsonData); err != nil {
 		c.JSON(http.StatusBadRequest, errors.New("ошибка при получении данных").Error())
 		return
 	}

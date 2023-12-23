@@ -6,7 +6,6 @@ import (
 	"mime/multipart"
 	"project/internal/model"
 	"project/internal/pkg/validators"
-	"time"
 )
 
 func (uc *UseCase) CreateMarkdown(markdown model.Markdown, id uint) (model.Markdown, error) {
@@ -16,9 +15,12 @@ func (uc *UseCase) CreateMarkdown(markdown model.Markdown, id uint) (model.Markd
 
 	markdown.User_ID = id
 
-	if err := uc.Repository.CreateMarkdown(markdown); err != nil {
+	id, err := uc.Repository.CreateMarkdown(markdown)
+	if err != nil {
 		return model.Markdown{}, errors.New("ошибка при создании маркдауна")
 	}
+
+	markdown.Markdown_ID = int(id)
 
 	return markdown, nil
 }
@@ -86,31 +88,24 @@ func (uc *UseCase) UpdateMarkdown(markdown map[string]interface{}) error {
 	return nil
 }
 
-func (uc *UseCase) AddMarkdownToContributor(mid, cid uint) error {
-	if mid <= 0 || cid <= 0 {
+func (uc *UseCase) AddMarkdownToContributor(mid, uid uint) error {
+	if mid <= 0 || uid <= 0 {
 		return errors.New("id не может быть отрицательным")
 	}
 	// черновик, требует подтверждения, в работе, отклонен, удален, завершен
-	if err := uc.Repository.AddMarkdownToLastDraft(mid, cid); err != nil {
+	if err := uc.Repository.AddMarkdownToLastDraft(mid, uid); err != nil {
 		return errors.New("ошибка при добавлении")
 	}
 
 	return nil
 }
 
-func (uc *UseCase) DeleteContributorFromMd(jsonData map[string]interface{}) error {
-	cid, cidOk := jsonData["Contributor_ID"].(float64)
-	mid, midOk := jsonData["Markdown_ID"].(float64)
-
-	if !cidOk || !midOk {
-		return errors.New("id мардауна или контрибьютора отсутствуют")
+func (uc *UseCase) DeleteContributorFromMd(markdownID, userID int) error {
+	contributor, err := uc.Repository.GetContributorByUserID(uint(userID))
+	if err != nil {
+		return errors.New("ошибка при получении данных пользователя")
 	}
-
-	if cid <= 0 || mid <= 0 {
-		return errors.New("id маркдауна или контрибьютора отрицательны")
-	}
-
-	err := uc.Repository.DeleteContributorFromMd(uint(mid), uint(cid))
+	err = uc.Repository.DeleteContributorFromMd(uint(markdownID), uint(contributor.Contributor_ID))
 	if err != nil {
 		return errors.New("ошибка при удалении контрибьютора из маркдауна")
 	}
@@ -118,30 +113,31 @@ func (uc *UseCase) DeleteContributorFromMd(jsonData map[string]interface{}) erro
 	return nil
 }
 
-func (uc *UseCase) AddMarkdownIcon(id uint, image *multipart.FileHeader) error {
+func (uc *UseCase) AddMarkdownIcon(id uint, image *multipart.FileHeader) (string, error) {
 	if id <= 0 {
-		return errors.New("id не может быть отрицательным")
+		return "", errors.New("id не может быть отрицательным")
 	}
 
 	file, err := image.Open()
 	if err != nil {
-		return errors.New("ошибка при открытии изображения")
+		return "", errors.New("ошибка при открытии изображения")
 	}
 
 	defer file.Close()
 
 	imageBytes, err := io.ReadAll(file)
 	if err != nil {
-		return errors.New("ошибка чтения изображения")
+		return "", errors.New("ошибка чтения изображения")
 	}
 
 	contentType := image.Header.Get("Content-Type")
 
-	if err = uc.Repository.AddMarkdownIcon(int(id), imageBytes, contentType); err != nil {
-		return errors.New("ошибка при добавлении иконки")
+	url, err := uc.Repository.AddMarkdownIcon(int(id), imageBytes, contentType)
+	if err != nil {
+		return "", errors.New("ошибка при добавлении иконки")
 	}
 
-	return nil
+	return url, nil
 }
 
 func (uc *UseCase) RequestContribution(uid, mid uint) error {
@@ -149,32 +145,11 @@ func (uc *UseCase) RequestContribution(uid, mid uint) error {
 		return errors.New("id пользователя или маркдауна не могут быть отрицательными")
 	}
 
-	candidates, err := uc.Repository.GetContributorsByMarkdownID("", "", "", "", uint(mid))
-	if err != nil {
-		return errors.New("ошибка при создании запроса на редактирование")
-	}
-
-	for i := 0; i < len(candidates); i++ {
-		if uint(candidates[i].User_ID) == uid {
-			return errors.New("вы уже подали запрос на редактирование")
-		}
-	}
-
-	user, err := uc.Repository.GetUserById(uid)
-	if err != nil {
-		return errors.New("ошибка при создании запроса на редактирование")
-	}
-
-	contributor := model.Contributor{
-		User_ID:      int(uid),
-		Created_Date: time.Now(),
-		Email:        user.Email,
-	}
-
-	err = uc.Repository.RequestContribution(contributor, uint(mid))
+	err := uc.Repository.RequestContribution(uint(uid), uint(mid))
 	if err != nil {
 		return errors.New("ошибка при создании запроса на редактирование")
 	}
 
 	return nil
+
 }

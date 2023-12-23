@@ -54,7 +54,7 @@ func (a *Application) StartServer() {
 				markdowns.GET("/:id", a.delivery.GetMarkdown)
 				markdowns.DELETE("/:id", a.delivery.DeleteMarkdown)
 				markdowns.PUT("/", a.delivery.UpdateMarkdown)
-				markdowns.POST("/add-md-to-contributor/:markdown_id/:contributor_id", a.delivery.AddMarkdownToContributor)
+				markdowns.POST("/add-md-to-contributor/:markdown_id", a.OnAuthCheck(roles.User, roles.Moderator, roles.Admin), a.delivery.AddMarkdownToContributor)
 				markdowns.POST("/:id/image", a.delivery.AddMarkdownIcon)
 			}
 		}
@@ -63,10 +63,10 @@ func (a *Application) StartServer() {
 			contributor.GET("/:id", a.delivery.GetContributor)
 			contributor.GET("/:id/markdown", a.delivery.GetAllContributorsFromMarkdown)
 			contributor.GET("/", a.delivery.GetAllContirbutors)
-			contributor.DELETE("/delete", a.delivery.DeleteContributorFromMd)
+			contributor.DELETE("/:id/delete", a.OnAuthCheck(roles.User, roles.Moderator, roles.Admin), a.delivery.DeleteContributorFromMd)
 			contributor.PUT("/moderator", a.delivery.UpdateContributorAccessByModerator)
 			contributor.PUT("/admin", a.delivery.UpdateContributroAccessByAdmin)
-			contributor.PUT("/:id/user", a.delivery.RequestContribution)
+			contributor.PUT("/:id/user", a.OnAuthCheck(roles.User, roles.Moderator, roles.Admin), a.delivery.RequestContribution)
 			contributor.PUT("/:id", a.delivery.UpdateContributorData)
 		}
 	}
@@ -78,5 +78,4 @@ func (a *Application) StartServer() {
 		log.Println("Error with running\nServer down")
 		return
 	}
-
 }

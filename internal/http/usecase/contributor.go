@@ -5,12 +5,12 @@ import (
 	"project/internal/model"
 )
 
-func (uc *UseCase) GetContributor(id uint) (model.Contributor, []model.Markdown, error) {
+func (uc *UseCase) GetContributor(id uint, start_date, end_date, status string) (model.Contributor, []model.Markdown, error) {
 	if id <= 0 {
 		return model.Contributor{}, []model.Markdown{}, errors.New("id не может быть отрицательным")
 	}
 
-	contributor, markdowns, err := uc.Repository.GetContributorByID(uint(id))
+	contributor, markdowns, err := uc.Repository.GetContributorByID(uint(id), status, start_date, end_date)
 	if err != nil {
 		return model.Contributor{}, []model.Markdown{}, errors.New("ошибка при получении данных")
 	}
@@ -62,14 +62,11 @@ func (uc *UseCase) UpdateContributorAccessByModerator(jsonData map[string]interf
 	if access == "Черновик" {
 		return errors.New("нельзя вернуть статус в черновик")
 	}
-
-	// currentStatus, err := uc.Repository.GetContributorStatus(uint(cid), uint(mid))
-	// if err != nil {
-	// return errors.New("ошибка при получении данных о статусе")
-	// }
-	err := uc.Repository.UpdateContributorAccessByModerator(uint(mid), uint(cid), access)
-	if err != nil {
-		return err
+	if access == "В работе" || access == "Удален" {
+		err := uc.Repository.UpdateContributorAccessByModerator(uint(mid), uint(cid), access)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

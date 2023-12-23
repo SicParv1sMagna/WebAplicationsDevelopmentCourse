@@ -1,7 +1,7 @@
 package model
 
 type MarkdownContributor struct {
-	Markdown_ID    uint
-	Contributor_ID uint
+	Markdown_ID    uint   `gorm: "primaryKey;column:markdown_id"`
+	Contributor_ID uint   `gorm:"primaryKey;column:contributor_id"`
 	Status         string `gorm:"column:Status"`
 }

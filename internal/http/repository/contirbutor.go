@@ -1,28 +1,54 @@
 package repository
 
 import (
-	"fmt"
 	"project/internal/model"
 	"time"
 )
 
-func (r *Repository) GetContributorByID(id uint) (model.Contributor, []model.Markdown, error) {
+func (r *Repository) GetContributorByUserID(userID uint) (model.Contributor, error) {
+	var contributor model.Contributor
+
+	err := r.db.Table("contributor").Where("user_id = ?", userID).First(&contributor).Error
+	if err != nil {
+		return model.Contributor{}, err
+	}
+
+	return contributor, nil
+}
+
+func (r *Repository) GetContributorByID(id uint, status, start_date, end_date string) (model.Contributor, []model.Markdown, error) {
 	var contributor model.Contributor
 	var markdowns []model.Markdown
 
+	// Query to fetch contributor details
 	err := r.db.Table(`contributor`).Where("Contributor_ID = ?", id).First(&contributor).Error
 	if err != nil {
 		return contributor, markdowns, err
 	}
 
-	err = r.db.
+	// Query to fetch markdowns based on provided parameters
+	query := r.db.
 		Joins(`JOIN document_request ON contributor.Contributor_ID = document_request.Contributor_ID`).
 		Joins(`JOIN "Markdown" ON document_request.Markdown_ID = "Markdown".Markdown_ID`).
 		Where("contributor.Contributor_ID = ?", id).
-		Table("contributor"). // Add this line to specify the table name
-		Select(`contributor.*, "Markdown".*`).
-		Find(&markdowns).Error
+		Table("contributor").
+		Select(`contributor.*, "Markdown".*`)
 
+	// Add conditions based on parameters
+	if status != "" {
+		query = query.Where(`document_request."Status" = ?`, status)
+	}
+
+	if start_date != "" {
+		query = query.Where("contributor.created_date >= ?", start_date)
+	}
+
+	if end_date != "" {
+		query = query.Where("contributor.created_date <= ?", end_date)
+	}
+
+	// Execute the query and scan the result into the markdowns slice
+	err = query.Find(&markdowns).Error
 	if err != nil {
 		return contributor, markdowns, err
 	}
@@ -55,7 +81,6 @@ func (r *Repository) GetContributorsByMarkdownID(email string, status string, st
 	if end_date != "" {
 		query = query.Where("c.created_date <= ?", end_date)
 	}
-	fmt.Println(query)
 	// Execute the query and scan the result into the contributors slice
 	if err := query.Find(&contributors).Error; err != nil {
 		return nil, err
@@ -126,6 +151,7 @@ func (r *Repository) GetAllContributors(email, status, start_date, end_date stri
 	if err := query.Find(&contributors).Error; err != nil {
 		return nil, err
 	}
+
 	return contributors, nil
 }
 

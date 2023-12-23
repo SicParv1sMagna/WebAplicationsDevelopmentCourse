@@ -45,7 +45,6 @@ func (mc *MinioClient) UploadServiceImage(baggageID int, imageBytes []byte, cont
 		ContentType: contentType,
 	})
 	if err != nil {
-		fmt.Println(err)
 		return "", errors.New("ошибка загрузки изображения в минио")
 	}
 
