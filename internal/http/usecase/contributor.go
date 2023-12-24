@@ -3,6 +3,7 @@ package usecase
 import (
 	"errors"
 	"project/internal/model"
+	"project/internal/pkg/validators"
 )
 
 func (uc *UseCase) GetContributor(id uint, start_date, end_date, status string) (model.Contributor, []model.Markdown, error) {
@@ -31,13 +32,15 @@ func (uc *UseCase) GetAllContributorsFromMarkdown(email, status, start_date, end
 	return contributors, nil
 }
 
-func (uc *UseCase) GetAllContributors(email, status, start_date, end_date string) ([]model.Contributor, error) {
+func (uc *UseCase) GetAllContributors(email, status, start_date, end_date string) ([]model.ContributorWithStatus, error) {
 	contributors, err := uc.Repository.GetAllContributors(email, status, start_date, end_date)
 	if err != nil {
-		return []model.Contributor{}, errors.New("ошибка при получении данных")
+		return []model.ContributorWithStatus{}, errors.New("ошибка при получении данных")
 	}
 
-	return contributors, nil
+	uniqueContributors := validators.RemoveDuplicateContributors(contributors)
+
+	return uniqueContributors, nil
 }
 
 func (uc *UseCase) UpdateContributorAccessByModerator(jsonData map[string]interface{}) error {

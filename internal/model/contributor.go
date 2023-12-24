@@ -11,10 +11,12 @@ type Contributor struct {
 	Created_Date    *time.Time `json:"created_date"`
 	Formed_Date     *time.Time `json:"formed_date"`
 	Completion_Date *time.Time `json:"completion_date"`
+	Status          string     `json:"status" gorm:"column:Status"`
 	Email           string     `json:"email" gorm:"column:email"`
 }
 
-type ContributorWithMarkdowns struct {
+type ContributorWithStatus struct {
 	Contributor
-	Markdown []Markdown `gorm:"foreignKey:contributor_id;references:contributor_id"`
+	Status    string              `json:"status" gorm:"column:Status"`
+	Markdowns []MarkdownWithDates `gorm:"foreignkey:ContributorID"`
 }

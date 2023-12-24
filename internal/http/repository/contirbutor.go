@@ -32,7 +32,7 @@ func (r *Repository) GetContributorByID(id uint, status, start_date, end_date st
 		Joins(`JOIN "Markdown" ON document_request.Markdown_ID = "Markdown".Markdown_ID`).
 		Where("contributor.Contributor_ID = ?", id).
 		Table("contributor").
-		Select(`contributor.*, "Markdown".*`)
+		Select(`contributor.*, "Markdown".*, document_request."Status"`)
 
 	// Add conditions based on parameters
 	if status != "" {
@@ -121,8 +121,8 @@ func (r *Repository) UpdateContributorAccessByAdmin(id, cid uint, newStatus stri
 	return nil
 }
 
-func (r *Repository) GetAllContributors(email, status, start_date, end_date string) ([]model.Contributor, error) {
-	var contributors []model.Contributor
+func (r *Repository) GetAllContributors(email, status, start_date, end_date string) ([]model.ContributorWithStatus, error) {
+	var contributors []model.ContributorWithStatus
 
 	// Start building the query
 	query := r.db.Table("contributor").
@@ -150,6 +150,21 @@ func (r *Repository) GetAllContributors(email, status, start_date, end_date stri
 	// Execute the query and scan the result into the contributors slice
 	if err := query.Find(&contributors).Error; err != nil {
 		return nil, err
+	}
+
+	for i := range contributors {
+		// Assuming each contributor has an array of markdowns
+		for j := range contributors[i].Markdowns {
+			if contributors[i].Created_Date != nil {
+				contributors[i].Markdowns[j].Created_Date = contributors[i].Created_Date
+			}
+			if contributors[i].Formed_Date != nil {
+				contributors[i].Markdowns[j].Formed_Date = contributors[i].Formed_Date
+			}
+			if contributors[i].Completion_Date != nil {
+				contributors[i].Markdowns[j].Completion_Date = contributors[i].Completion_Date
+			}
+		}
 	}
 
 	return contributors, nil
