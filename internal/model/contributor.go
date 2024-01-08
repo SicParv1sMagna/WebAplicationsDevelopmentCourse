@@ -13,6 +13,7 @@ type Contributor struct {
 	Completion_Date *time.Time `json:"completion_date"`
 	Status          string     `json:"status" gorm:"column:Status"`
 	Email           string     `json:"email" gorm:"column:email"`
+	ApprovedBy      string     `json:"approved_by" gorm:"column:approved_by"`
 }
 
 type ContributorWithStatus struct {

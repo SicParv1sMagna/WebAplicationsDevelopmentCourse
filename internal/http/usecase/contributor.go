@@ -3,15 +3,14 @@ package usecase
 import (
 	"errors"
 	"project/internal/model"
-	"project/internal/pkg/validators"
 )
 
-func (uc *UseCase) GetContributor(id uint, start_date, end_date, status string) (model.Contributor, []model.Markdown, error) {
+func (uc *UseCase) GetContributor(id uint) (model.Contributor, []model.Markdown, error) {
 	if id <= 0 {
 		return model.Contributor{}, []model.Markdown{}, errors.New("id не может быть отрицательным")
 	}
 
-	contributor, markdowns, err := uc.Repository.GetContributorByID(uint(id), status, start_date, end_date)
+	contributor, markdowns, err := uc.Repository.GetContributorByID(uint(id))
 	if err != nil {
 		return model.Contributor{}, []model.Markdown{}, errors.New("ошибка при получении данных")
 	}
@@ -32,31 +31,22 @@ func (uc *UseCase) GetAllContributorsFromMarkdown(email, status, start_date, end
 	return contributors, nil
 }
 
-func (uc *UseCase) GetAllContributors(email, status, start_date, end_date string) ([]model.ContributorWithStatus, error) {
+func (uc *UseCase) GetAllContributors(email, status, start_date, end_date string) ([]model.Contributor, error) {
 	contributors, err := uc.Repository.GetAllContributors(email, status, start_date, end_date)
 	if err != nil {
-		return []model.ContributorWithStatus{}, errors.New("ошибка при получении данных")
+		return []model.Contributor{}, errors.New("ошибка при получении данных")
 	}
 
-	uniqueContributors := validators.RemoveDuplicateContributors(contributors)
-
-	return uniqueContributors, nil
+	return contributors, nil
 }
 
-func (uc *UseCase) UpdateContributorAccessByModerator(jsonData map[string]interface{}) error {
+func (uc *UseCase) UpdateContributorAccessByModerator(jsonData map[string]interface{}, moderatorId int) error {
 	cid, ok := jsonData["Contributor_ID"].(float64)
 	if !ok {
 		return errors.New("поле контрибьютор должно быть передано")
 	}
 	if cid <= 0 {
 		return errors.New("id контрибьютора не может быть отрицательным")
-	}
-	mid, ok := jsonData["Markdown_ID"].(float64)
-	if !ok {
-		return errors.New("поле маркдаун должно быть передано")
-	}
-	if mid <= 0 {
-		return errors.New("id маркдауна не может быть отрицательным")
 	}
 	access, ok := jsonData["Access"].(string)
 	if !ok {
@@ -65,8 +55,8 @@ func (uc *UseCase) UpdateContributorAccessByModerator(jsonData map[string]interf
 	if access == "Черновик" {
 		return errors.New("нельзя вернуть статус в черновик")
 	}
-	if access == "В работе" || access == "Удален" {
-		err := uc.Repository.UpdateContributorAccessByModerator(uint(mid), uint(cid), access)
+	if access == "В работе" || access == "Отклонен" {
+		err := uc.Repository.UpdateContributorAccessByModerator(uint(cid), uint(moderatorId), access)
 		if err != nil {
 			return err
 		}
@@ -97,11 +87,11 @@ func (uc *UseCase) UpdateContributorAccessByAdmin(jsonData map[string]interface{
 		return errors.New("нельзя вернуть статус в черновик")
 	}
 
-	currentStatus, err := uc.Repository.GetContributorStatus(uint(cid), uint(mid))
+	contributor, _, err := uc.Repository.GetContributorByID(uint(cid))
 	if err != nil {
 		return errors.New("ошибка при получении данных о статусе")
 	}
-	if currentStatus == "Требует подтверждения" {
+	if contributor.Status == "Требует подтверждения" {
 		err = uc.Repository.UpdateContributorAccessByAdmin(uint(mid), uint(cid), access)
 		if err != nil {
 			return errors.New("ошибка при обновлении статуса")

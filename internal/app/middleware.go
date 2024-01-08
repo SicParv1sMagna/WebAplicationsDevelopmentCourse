@@ -57,6 +57,53 @@ func (a *Application) OnAuthCheck(allowedRoles ...roles.Role) gin.HandlerFunc {
 	}
 }
 
+func (a *Application) Guest(allowedRoles ...roles.Role) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := extractTokenFromHeader(c.Request)
+		if tokenString == "" {
+			c.Set("userID", int(0))
+			return
+		}
+
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return []byte("SuperSecretKey"), nil
+		})
+
+		if err != nil || !token.Valid {
+			c.Set("userID", int(0))
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.Set("userID", int(0))
+			return
+		}
+
+		userID, ok := claims["userID"].(float64)
+		if !ok {
+			c.Set("userID", int(0))
+			return
+		}
+
+		c.Set("userID", int(userID))
+
+		userRole, ok := claims["role"].(float64)
+		if !ok {
+			c.Set("userID", int(0))
+			return
+		}
+
+		if !isRoleAllowed(int(userRole), allowedRoles) {
+			// Переместил установку внутрь условия
+			c.Set("userID", int(0))
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func extractTokenFromHeader(req *http.Request) string {
 	bearerToken := req.Header.Get("Authorization")
 	if bearerToken == "" {

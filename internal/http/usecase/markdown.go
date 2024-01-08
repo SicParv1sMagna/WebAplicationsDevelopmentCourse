@@ -25,13 +25,13 @@ func (uc *UseCase) CreateMarkdown(markdown model.Markdown, id uint) (model.Markd
 	return markdown, nil
 }
 
-func (uc *UseCase) GetAllMarkdown(name string) ([]model.Markdown, error) {
-	md, err := uc.Repository.GetAllMarkdowns(name)
+func (uc *UseCase) GetAllMarkdown(name string, userID int) ([]model.Markdown, uint, error) {
+	md, id, err := uc.Repository.GetAllMarkdowns(name, userID)
 	if err != nil {
-		return []model.Markdown{}, errors.New("ошибка при получении маркадунов")
+		return []model.Markdown{}, id, errors.New("ошибка при получении маркадунов")
 	}
 
-	return md, nil
+	return md, id, nil
 }
 
 func (uc *UseCase) GetMarkdown(id int) (model.Markdown, error) {
@@ -101,11 +101,7 @@ func (uc *UseCase) AddMarkdownToContributor(mid, uid uint) error {
 }
 
 func (uc *UseCase) DeleteContributorFromMd(markdownID, userID int) error {
-	contributor, err := uc.Repository.GetContributorByUserID(uint(userID))
-	if err != nil {
-		return errors.New("ошибка при получении данных пользователя")
-	}
-	err = uc.Repository.DeleteContributorFromMd(uint(markdownID), uint(contributor.Contributor_ID))
+	err := uc.Repository.DeleteContributorFromMd(uint(markdownID), uint(userID))
 	if err != nil {
 		return errors.New("ошибка при удалении контрибьютора из маркдауна")
 	}

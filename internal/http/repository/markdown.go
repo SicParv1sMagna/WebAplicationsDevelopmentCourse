@@ -3,25 +3,38 @@ package repository
 import (
 	"errors"
 	"project/internal/model"
-	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
 func (r *Repository) CreateMarkdown(md model.Markdown) (uint, error) {
-	err := r.db.Table("Markdown").Create(&md).Error
+	err := r.db.Exec(`INSERT INTO "Markdown" ("Name", "Content", "Status", "created_time", "user_id", "PhotoURL") VALUES ($1, $2, $3, $4, $5, $6)`, md.Name, md.Content, md.Status, md.Created_Time, md.User_ID, md.PhotoURL).Error
 
 	return uint(md.Markdown_ID), err
 }
 
-func (r *Repository) GetAllMarkdowns(name string) ([]model.Markdown, error) {
+func (r *Repository) GetAllMarkdowns(name string, userID int) ([]model.Markdown, uint, error) {
+	var contributorId uint
+	var contributor model.Contributor
+	if userID != 0 {
+		err := r.db.Table("contributor").Where(`user_id = ? and "Status" = ?`, userID, "Черновик").First(&contributor).Error
+		if err != nil {
+			contributorId = 0
+		} else {
+			contributorId = uint(contributor.Contributor_ID)
+		}
+	} else {
+		contributorId = 0
+	}
+
 	name = "%" + name + "%"
 	var markdowns []model.Markdown
 
-	err := r.db.Table("Markdown").Where(`("Status" = 'Активен' OR "Status" = 'Черновик') AND LOWER("Name") LIKE LOWER(?)`, name).Find(&markdowns).Error
+	err := r.db.Table("Markdown").Where(`("Status" = 'Активен' OR "Status" = 'Черновик') AND LOWER("Name") LIKE LOWER(?)`, name).Order("markdown_id DESC").Find(&markdowns).Error
 
-	return markdowns, err
+	return markdowns, contributorId, err
 }
 
 func (r *Repository) GetMarkdownById(mdID uint) (model.Markdown, error) {
@@ -59,82 +72,88 @@ func (r *Repository) SearchMarkdown(query string) ([]model.Markdown, error) {
 	return markdowns, nil
 }
 
-func isDuplicateKeyError(err error) bool {
-	// Check the specific error codes that indicate a duplicate key violation
-	return strings.Contains(err.Error(), "23505") || strings.Contains(err.Error(), "unique constraint")
-}
-
 func (r *Repository) AddMarkdownToLastDraft(markdownID, userID uint) error {
-	var contributor model.Contributor
-	// Check if contributor exists
-	err := r.db.Table("contributor").Where("user_id = ?", userID).First(&contributor).Error
-
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	var user model.User
+	if err := r.db.Table("User").Where("user_id = ?", userID).First(&user).Error; err != nil {
 		return err
 	}
-	// If contributor doesn't exist, create a new one
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		user, err := r.GetUserById(userID)
-		if err != nil {
-			return err
-		}
+	// Находим последнюю миссию с mission_status = "Draft"
+	var lastDraftContributor model.Contributor
+	dbErr := r.db.
+		Table("contributor").
+		Order("created_date DESC").
+		Where(`user_id = ? AND "Status" = ?`, userID, "Черновик").
+		First(&lastDraftContributor).
+		Error
 
-		createdDate := time.Now()
+	if dbErr != nil && !errors.Is(dbErr, gorm.ErrRecordNotFound) {
+		return dbErr
+	}
 
-		contributor = model.Contributor{
+	// Если миссии с mission_status = "Draft" нет, создаем новую
+	if errors.Is(dbErr, gorm.ErrRecordNotFound) {
+		currentTime := time.Now()
+
+		lastDraftContributor = model.Contributor{
 			User_ID:         int(userID),
-			Email:           user.Email,
+			Created_Date:    &currentTime,
 			Formed_Date:     nil,
-			Created_Date:    &createdDate,
 			Completion_Date: nil,
+			Status:          "Черновик",
+			Email:           user.Email,
 		}
-
-		// Create new contributor
-		err = r.db.Table("contributor").Create(&contributor).Error
-		if err != nil {
-			return err
-		}
-
-		err = r.db.Table("contributor").Where("user_id = ?", userID).First(&contributor).Error
-		if err != nil {
+		if err := r.db.Table("contributor").Create(&lastDraftContributor).Error; err != nil {
 			return err
 		}
 	}
 
-	markdownContributor := model.MarkdownContributor{
-		Markdown_ID:    markdownID,
-		Contributor_ID: uint(contributor.Contributor_ID),
-		Status:         "Черновик",
+	// Получаем образец из базы данных по его идентификатору
+	var newMarkdown model.Markdown
+	if err := r.db.Table("Markdown").First(&newMarkdown, markdownID).Error; err != nil {
+		return err
 	}
 
-	// Create Markdown contributor entry
-	err = r.db.Table("document_request").Create(&markdownContributor).Error
-
-	if err != nil {
-		if isDuplicateKeyError(err) {
-			err := r.db.Table("document_request").
-				Where("contributor_id = ? AND markdown_id = ?",
-					markdownContributor.Contributor_ID,
-					markdownContributor.Markdown_ID).
-				Updates(map[string]interface{}{"Status": "Черновик"}).Error
-
-			if err != nil {
-				return err
-			}
-		} else {
-			return err
+	// Добавляем образец в миссию
+	if err := r.db.Table("document_request").Create(&model.MarkdownContributor{
+		Markdown_ID:    uint(newMarkdown.Markdown_ID),
+		Contributor_ID: uint(lastDraftContributor.Contributor_ID),
+	}).Error; err != nil {
+		// Проверяем, является ли ошибка уникальным ключом
+		pgErr, ok := err.(*pgconn.PgError)
+		if ok && pgErr.Code == "23505" {
+			// Здесь обрабатываем случай дубликата ключа, если это произошло
+			return errors.New("Образец уже добавлен в миссию")
 		}
+		return err
 	}
 
 	return nil
 }
 
-func (r *Repository) DeleteContributorFromMd(id, cid uint) error {
-	err := r.db.Table("document_request").
-		Where("contributor_id = ? AND markdown_id = ?", cid, id).
-		Updates(map[string]interface{}{"Status": "Удален"}).Error
+func (r *Repository) DeleteContributorFromMd(id, uid uint) error {
+	var lastDraftContributor model.Contributor
+	dbErr := r.db.
+		Table("contributor").
+		Order("formed_date desc").
+		Where(`"Status" = ? AND user_id = ?`, "Черновик", uid).
+		First(&lastDraftContributor).
+		Error
 
-	return err
+	if dbErr != nil && !errors.Is(dbErr, gorm.ErrRecordNotFound) {
+		return dbErr
+	}
+
+	// Если миссии с mission_status = "Draft" нет, возвращаем ошибку
+	if errors.Is(dbErr, gorm.ErrRecordNotFound) {
+		return errors.New("Контрибьютор со статусом черновик не найдена")
+	}
+
+	// Удаляем образец из миссии
+	if err := r.db.Exec("DELETE FROM document_request WHERE contributor_id = ? AND markdown_id = ?", lastDraftContributor.Contributor_ID, id).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Repository) AddMarkdownIcon(id int, imageBytes []byte, contentType string) (string, error) {
@@ -157,19 +176,7 @@ func (r *Repository) AddMarkdownIcon(id int, imageBytes []byte, contentType stri
 }
 
 func (r *Repository) RequestContribution(user_id uint, markdown_id uint) error {
-	var contributor model.Contributor
-
-	err := r.db.Table("contributor").Where("user_id = ?", user_id).First(&contributor).Error
-	if err != nil {
-		return err
-	}
-
-	err = r.db.Table("document_request").Where("markdown_id = ? AND contributor_id = ?", markdown_id, contributor.Contributor_ID).Update("Status", "Требует подтверждения").Error
-	if err != nil {
-		return err
-	}
-
-	err = r.db.Table("contributor").Where("contributor_id = ?", contributor.Contributor_ID).Update("formed_date", time.Now()).Error
+	err := r.db.Table("contributor").Where("user_id = ?", user_id).Update("formed_date", time.Now()).Update("Status", "Требует подтверждения").Error
 	if err != nil {
 		return err
 	}

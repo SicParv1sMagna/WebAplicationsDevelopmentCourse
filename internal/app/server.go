@@ -44,13 +44,14 @@ func (a *Application) StartServer() {
 			user.GET("/me", a.OnAuthCheck(roles.User, roles.Moderator, roles.Admin), a.delivery.GetMe)
 			user.DELETE("/delete", delivery.DeleteUser)
 			user.PUT("/edit-info", delivery.UpdateUserInfo)
+			user.GET("/:id", a.OnAuthCheck(roles.Moderator, roles.Admin), a.delivery.GetUserById)
 		}
 		notes := api.Group("/notes")
 		{
 			markdowns := notes.Group("/markdown")
 			{
 				markdowns.POST("/create", a.OnAuthCheck(roles.User, roles.Moderator, roles.Admin), a.delivery.CreateMarkdown)
-				markdowns.GET("/", a.delivery.GetAllMarkdowns)
+				markdowns.GET("/", a.Guest(roles.User, roles.Admin, roles.Moderator), a.delivery.GetAllMarkdowns)
 				markdowns.GET("/:id", a.delivery.GetMarkdown)
 				markdowns.DELETE("/:id", a.delivery.DeleteMarkdown)
 				markdowns.PUT("/", a.delivery.UpdateMarkdown)
@@ -60,14 +61,14 @@ func (a *Application) StartServer() {
 		}
 		contributor := api.Group("/contributor")
 		{
-			contributor.GET("/:id", a.delivery.GetContributor)
-			contributor.GET("/:id/markdown", a.delivery.GetAllContributorsFromMarkdown)
 			contributor.GET("/", a.delivery.GetAllContirbutors)
+			contributor.GET("/:id", a.delivery.GetContributor)
+			contributor.PUT("/:id", a.delivery.UpdateContributorData)
 			contributor.DELETE("/:id/delete", a.OnAuthCheck(roles.User, roles.Moderator, roles.Admin), a.delivery.DeleteContributorFromMd)
-			contributor.PUT("/moderator", a.delivery.UpdateContributorAccessByModerator)
+			contributor.GET("/:id/markdown", a.delivery.GetAllContributorsFromMarkdown)
 			contributor.PUT("/admin", a.delivery.UpdateContributroAccessByAdmin)
 			contributor.PUT("/:id/user", a.OnAuthCheck(roles.User, roles.Moderator, roles.Admin), a.delivery.RequestContribution)
-			contributor.PUT("/:id", a.delivery.UpdateContributorData)
+			contributor.PUT("/moderator", a.OnAuthCheck(roles.Moderator, roles.Admin), a.delivery.UpdateContributorAccessByModerator)
 		}
 	}
 

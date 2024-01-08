@@ -30,15 +30,17 @@ func (d *Delivery) CreateMarkdown(c *gin.Context) {
 }
 
 func (d *Delivery) GetAllMarkdowns(c *gin.Context) {
+	userID := c.MustGet("userID").(int)
 	name := c.DefaultQuery("name", "")
 
-	md, err := d.usecase.GetAllMarkdown(name)
+	md, id, err := d.usecase.GetAllMarkdown(name, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, md)
+	c.JSON(http.StatusOK, gin.H{"Contributor_id": id,
+		"Markdowns": md})
 }
 
 func (d *Delivery) GetMarkdown(c *gin.Context) {

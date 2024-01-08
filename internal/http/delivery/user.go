@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"project/internal/model"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -81,4 +82,20 @@ func UpdateUserInfo(c *gin.Context) {
 // Удаление аккаунта пользователя
 func DeleteUser(c *gin.Context) {
 
+}
+
+func (d *Delivery) GetUserById(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	user, err := d.usecase.Repository.GetUserById(uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }

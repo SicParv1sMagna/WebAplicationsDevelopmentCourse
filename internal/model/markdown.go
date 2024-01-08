@@ -4,7 +4,7 @@ import "time"
 
 // ORM-модель таблицы Markdown из базы данных
 type Markdown struct {
-	Markdown_ID   int       `json:"Markdown_ID" gorm:"primarykey;autoIncrement"`
+	Markdown_ID   int       `json:"Markdown_ID" gorm:"primarykey;autoIncrement;column:markdown_id"`
 	Name          string    `json:"Name" gorm:"column:Name"`
 	Content       string    `json:"Content" gorm:"column:Content"`
 	Status        string    `json:"Status" gorm:"column:Status"`
