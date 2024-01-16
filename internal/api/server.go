@@ -64,33 +64,6 @@ var users = []User{
 	},
 }
 
-var tasks = []Tasks{
-	{
-		Id:      1,
-		Name:    "Task #1",
-		Status:  "Important",
-		Content: []string{"Learn Golang", "Work in MOEX"},
-	},
-	{
-		Id:     2,
-		Name:   "Task #2",
-		Status: "Unimportant",
-		Content: []string{
-			"Buy vegetables",
-			"Buy groceries",
-		},
-	},
-	{
-		Id:     3,
-		Name:   "Welcome",
-		Status: "Importnant",
-		Content: []string{
-			"MOEX работа в четверг, 11:00",
-			"MOEX подписание документов на стажировку",
-		},
-	},
-}
-
 type SearchResult struct {
 	Title string
 	Link  string
@@ -108,17 +81,6 @@ func performSearch(query string) []SearchResult {
 				Title: note.Name,
 				Link:  fmt.Sprintf("/notes/md/%d", note.Id),
 				Type:  "Note",
-			})
-		}
-	}
-
-	// Search through tasks
-	for _, task := range tasks {
-		if strings.Contains(strings.ToLower(task.Name), strings.ToLower(query)) {
-			results = append(results, SearchResult{
-				Title: task.Name,
-				Link:  fmt.Sprintf("/notes/todo/%d", task.Id),
-				Type:  "Task",
 			})
 		}
 	}
@@ -163,7 +125,6 @@ func StartServer() {
 		c.HTML(http.StatusOK, "notes.tmpl", gin.H{
 			"css":   "styles/style.css",
 			"Notes": notes,
-			"Tasks": tasks,
 		})
 	})
 
@@ -178,25 +139,8 @@ func StartServer() {
 		c.HTML(http.StatusOK, "notesById.tmpl", gin.H{
 			"css":   "/styles/style.css",
 			"Notes": notes,
-			"Tasks": tasks,
 			"Note":  note,
 			"Users": users,
-		})
-	})
-
-	r.GET("/notes/todo/:id", func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			log.Println(err)
-		}
-
-		task := tasks[id-1]
-
-		c.HTML(http.StatusOK, "todosById.tmpl", gin.H{
-			"css":   "/styles/style.css",
-			"Notes": notes,
-			"Tasks": tasks,
-			"Task":  task,
 		})
 	})
 
@@ -211,7 +155,6 @@ func StartServer() {
 			"SearchQuery":   query,
 			"SearchResults": searchResults,
 			"Notes":         notes,
-			"Tasks":         tasks,
 			// Add any other necessary data for the sidebar template
 		})
 	})
