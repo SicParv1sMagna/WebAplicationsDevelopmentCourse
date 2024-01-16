@@ -27,7 +27,7 @@ func (r *Repository) GetMarkdownById(mdID uint) (model.Markdown, error) {
 }
 
 func (r *Repository) DeleteMarkdownById(mdID uint) error {
-	if err := r.db.Exec(`UPDATE "Markdown" SET "Status"='Удален' WHERE Markdown_ID = ?`, mdID).Error; err != nil {
+	if err := r.db.Table("Markdown").Where("Markdown_ID = ?", mdID).Update("Status", "Удален").Error; err != nil {
 		return err
 	}
 
